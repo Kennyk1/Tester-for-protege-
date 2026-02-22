@@ -652,6 +652,15 @@
       </div>
       Settings
     </button>
+
+    <div class="menu-divider"></div>
+
+    <button class="menu-item" onclick="clearChat()">
+      <div class="menu-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </div>
+      Clear Chat
+    </button>
   </div>
 
   <div class="sidebar-balance">
@@ -1021,20 +1030,23 @@ function useChip(el) {
   document.getElementById('chatInput').focus();
 }
 
-function addMessage(role, text) {
+function addMessage(role, text, timestamp = null, silent = false) {
   const empty = document.getElementById('emptyState');
   if (empty) empty.remove();
 
   const wrap = document.createElement('div');
   wrap.className = `msg-wrap ${role}`;
 
-  const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const time = timestamp
+    ? new Date(timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
   wrap.innerHTML = `
     <div class="bubble ${role}">${text.replace(/\n/g,'<br>')}</div>
-    <span class="msg-time">${now}</span>
+    <span class="msg-time">${time}</span>
   `;
   document.getElementById('chatArea').appendChild(wrap);
-  scrollToBottom();
+  if (!silent) scrollToBottom();
   return wrap;
 }
 
@@ -1111,9 +1123,127 @@ async function sendMessage() {
   }
 }
 
+// ══ LOAD CHAT HISTORY ══
+async function loadHistory() {
+  const token = localStorage.getItem('protege_token');
+  try {
+    const res = await fetch(`${API}/api/chat/history`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.history || data.history.length === 0) return;
+
+    // Remove empty state since we have history
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    // Render each message with date separators
+    let lastDate = null;
+    data.history.forEach(msg => {
+      const msgDate = new Date(msg.created_at);
+      const dateLabel = getDateLabel(msgDate);
+
+      // Show date separator if date changed
+      if (dateLabel !== lastDate) {
+        addDateSeparator(dateLabel);
+        lastDate = dateLabel;
+      }
+
+      // Add to UI (silent = don't scroll yet)
+      addMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, msgDate, true);
+
+      // Also rebuild chatHistory array for context
+      chatHistory.push({ role: msg.role, content: msg.content });
+    });
+
+    // Scroll to bottom after all history loaded
+    scrollToBottom();
+
+  } catch(e) {
+    console.log('History load failed silently:', e);
+    // Not a critical error — just show empty state
+  }
+}
+
+function getDateLabel(date) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function addDateSeparator(label) {
+  const sep = document.createElement('div');
+  sep.style.cssText = `
+    display:flex; align-items:center; gap:10px;
+    color:var(--muted); font-size:11px; letter-spacing:0.05em;
+    text-transform:uppercase; margin:8px 0;
+  `;
+  sep.innerHTML = `
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    ${label}
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  `;
+  document.getElementById('chatArea').appendChild(sep);
+}
+
+// ══ CLEAR CHAT ══
+async function clearChat() {
+  if (!confirm('Clear all chat history? This cannot be undone.')) return;
+  const token = localStorage.getItem('protege_token');
+  try {
+    await fetch(`${API}/api/chat/clear`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch(e) {}
+
+  // Clear UI
+  chatHistory = [];
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+
+  // Re-add empty state
+  area.innerHTML = `
+    <div class="empty-state" id="emptyState">
+      <div class="empty-logo">
+        <svg width="36" height="36" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <rect x="16" y="4" width="12" height="20" rx="6" fill="white"/>
+          <path d="M8 20c0 7.732 6.268 14 14 14s14-6.268 14-14" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <line x1="22" y1="34" x2="22" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="16" y1="40" x2="28" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="empty-title">How can I help you?</div>
+        <p class="empty-sub">Ask me to solve maths, physics, chemistry equations — or just calculate anything.</p>
+      </div>
+      <div class="suggestions">
+        <div class="chip" onclick="useChip(this)">
+          <div class="chip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="chip-text"><div class="chip-label">Solve a maths equation</div><div class="chip-sub">e.g. Integrate x² + 3x dx</div></div>
+        </div>
+        <div class="chip" onclick="useChip(this)">
+          <div class="chip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></div>
+          <div class="chip-text"><div class="chip-label">Chemistry or Physics problem</div><div class="chip-sub">e.g. Balance a chemical equation</div></div>
+        </div>
+        <div class="chip" onclick="useChip(this)">
+          <div class="chip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div>
+          <div class="chip-text"><div class="chip-label">Quick calculation</div><div class="chip-sub">e.g. What is 15% of 3,500?</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+  closeSidebar();
+}
+
 // ══ INIT ══
-window.addEventListener('load', () => {
-  loadUser();
+window.addEventListener('load', async () => {
+  await loadUser();
+  await loadHistory();
   showOnboarding();
 });
 </script>
