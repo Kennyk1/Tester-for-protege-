@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Protege – Referral</title>
+<style>
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --accent: #6c63ff; --accent2: #00d4aa;
+    --text: #f0f0f8; --muted: #6b6b80; --border: rgba(255,255,255,0.08);
+    --card: rgba(255,255,255,0.04); --error: #ff5e7e; --gold: #f7c948;
+  }
+  html, body { min-height:100%; width:100%; overflow-x:hidden; overflow-y:auto; background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; -webkit-font-smoothing:antialiased; }
+
+  .orbs { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.13; animation:drift 8s ease-in-out infinite alternate; }
+  .orb1 { width:300px; height:300px; background:var(--accent2); top:-80px; right:-60px; }
+  .orb2 { width:220px; height:220px; background:var(--accent); bottom:120px; left:-60px; animation-delay:-4s; }
+  .orb3 { width:160px; height:160px; background:var(--gold); top:40%; right:-40px; animation-delay:-2s; opacity:0.07; }
+  @keyframes drift { from{transform:translate(0,0) scale(1)} to{transform:translate(15px,25px) scale(1.06)} }
+
+  .page { position:relative; z-index:1; display:flex; flex-direction:column; padding:0 20px 60px; opacity:0; animation:fadeUp 0.5s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .header { display:flex; align-items:center; padding:52px 0 24px; gap:12px; }
+  .back-btn { width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; flex-shrink:0; transition:background 0.2s; }
+  .back-btn:active { background:rgba(255,255,255,0.1); }
+  .header-title { font-family:'Syne',-apple-system,sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.02em; }
+
+  /* Balance Card */
+  .balance-card { background:linear-gradient(135deg,#1a1060 0%,#0d1a2e 50%,#0a2a1a 100%); border:1px solid rgba(0,212,170,0.2); border-radius:24px; padding:28px 24px; margin-bottom:16px; position:relative; overflow:hidden; }
+  .balance-card::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle,rgba(0,212,170,0.15),transparent 70%); pointer-events:none; }
+  .balance-card::after { content:''; position:absolute; bottom:-30px; left:-30px; width:140px; height:140px; background:radial-gradient(circle,rgba(108,99,255,0.12),transparent 70%); pointer-events:none; }
+  .balance-label { font-size:12px; color:rgba(0,212,170,0.7); text-transform:uppercase; letter-spacing:0.08em; font-weight:500; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .balance-dot { width:6px; height:6px; background:var(--accent2); border-radius:50%; animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .balance-amount { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; letter-spacing:-0.03em; line-height:1; color:white; margin-bottom:4px; }
+  .balance-amount span { font-size:24px; color:var(--accent2); margin-right:4px; }
+  .balance-sub { font-size:13px; color:var(--muted); margin-bottom:24px; }
+  .balance-stats { display:flex; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px; }
+  .stat { flex:1; text-align:center; }
+  .stat+.stat { border-left:1px solid rgba(255,255,255,0.08); }
+  .stat-value { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .stat-value.gold { color:var(--gold); }
+  .stat-label { font-size:11px; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.05em; }
+
+  /* Action row */
+  .action-row { display:flex; gap:12px; margin-bottom:24px; }
+  .action-btn { flex:1; padding:16px 12px; border-radius:16px; border:1px solid var(--border); background:var(--card); display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; transition:border-color 0.2s,background 0.2s,transform 0.15s; font-family:inherit; color:var(--text); }
+  .action-btn:active { transform:scale(0.96); border-color:var(--accent); background:rgba(108,99,255,0.06); }
+  .action-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .action-label { font-size:13px; font-weight:500; }
+  .action-sub { font-size:10px; color:var(--muted); }
+
+  /* Section */
+  .section-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+
+  /* Referral code */
+  .code-box { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:20px; margin-bottom:16px; }
+  .code-display { display:flex; align-items:center; justify-content:space-between; background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.2); border-radius:14px; padding:16px 18px; margin-bottom:16px; }
+  .code-text { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; letter-spacing:0.15em; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .copy-btn { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--accent); border:none; border-radius:10px; color:white; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:transform 0.15s; }
+  .copy-btn:active { transform:scale(0.95); }
+  .copy-btn.copied { background:var(--accent2); }
+  .earn-info { display:flex; gap:10px; }
+  .earn-badge { flex:1; padding:12px; border-radius:12px; text-align:center; }
+  .earn-badge.you { background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2); }
+  .earn-badge.them { background:rgba(0,212,170,0.08); border:1px solid rgba(0,212,170,0.15); }
+  .earn-badge-amount { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:4px; }
+  .earn-badge.you .earn-badge-amount { color:var(--accent); }
+  .earn-badge.them .earn-badge-amount { color:var(--accent2); }
+  .earn-badge-label { color:var(--muted); font-size:11px; }
+
+  /* Share */
+  .share-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:24px; }
+  .share-btn { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 4px; background:var(--card); border:1px solid var(--border); border-radius:14px; cursor:pointer; transition:border-color 0.2s,transform 0.15s; font-size:10px; color:var(--muted); font-weight:500; }
+  .share-btn:active { transform:scale(0.93); }
+  .share-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+
+  /* Transactions */
+  .tx-empty { text-align:center; padding:32px 20px; background:var(--card); border:1px solid var(--border); border-radius:18px; color:var(--muted); font-size:14px; }
+  .tx-item { display:flex; align-items:center; gap:14px; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:14px; margin-bottom:10px; animation:fadeUp 0.3s ease; }
+  .tx-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .tx-icon.credit { background:rgba(0,212,170,0.1); }
+  .tx-icon.debit { background:rgba(255,94,126,0.1); }
+  .tx-icon.pending { background:rgba(247,201,72,0.1); }
+  .tx-info { flex:1; min-width:0; }
+  .tx-label { font-size:14px; font-weight:500; }
+  .tx-date { font-size:11px; color:var(--muted); margin-top:2px; }
+  .tx-status { font-size:10px; padding:2px 8px; border-radius:999px; font-weight:600; display:inline-block; margin-top:4px; }
+  .tx-status.pending { background:rgba(247,201,72,0.15); color:var(--gold); }
+  .tx-status.completed { background:rgba(0,212,170,0.12); color:var(--accent2); }
+  .tx-status.rejected { background:rgba(255,94,126,0.12); color:var(--error); }
+  .tx-amount { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; flex-shrink:0; }
+  .tx-amount.credit { color:var(--accent2); }
+  .tx-amount.debit { color:var(--error); }
+
+  /* ══ MODAL ══ */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; display:none; align-items:flex-end; backdrop-filter:blur(6px); }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet { width:100%; background:#111118; border-radius:28px 28px 0 0; border:1px solid var(--border); border-bottom:none; padding:0 24px 48px; animation:slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1); max-height:90vh; overflow-y:auto; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 24px; }
+  .modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; text-align:center; margin-bottom:6px; letter-spacing:-0.02em; }
+  .modal-sub { font-size:13px; color:var(--muted); text-align:center; margin-bottom:24px; line-height:1.5; }
+
+  /* Method selector */
+  .method-grid { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .method-item { display:flex; align-items:center; gap:14px; padding:16px; background:var(--card); border:1.5px solid var(--border); border-radius:14px; cursor:pointer; transition:all 0.2s; }
+  .method-item.selected { border-color:var(--accent); background:rgba(108,99,255,0.08); }
+  .method-item:active { transform:scale(0.98); }
+  .method-logo { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+  .method-info { flex:1; }
+  .method-name { font-size:14px; font-weight:600; }
+  .method-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+  .method-radio { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+  .method-item.selected .method-radio { border-color:var(--accent); background:var(--accent); }
+  .method-radio::after { content:''; width:8px; height:8px; border-radius:50%; background:white; opacity:0; transition:opacity 0.2s; }
+  .method-item.selected .method-radio::after { opacity:1; }
+
+  /* Form */
+  .form-field { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .form-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:500; }
+  .form-input-wrap { position:relative; display:flex; align-items:center; }
+  .form-input-icon { position:absolute; left:14px; pointer-events:none; display:flex; }
+  .form-input { width:100%; padding:16px 16px 16px 44px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; color:var(--text); font-family:inherit; font-size:15px; outline:none; transition:border-color 0.25s; -webkit-appearance:none; }
+  .form-input::placeholder { color:var(--muted); }
+  .form-input:focus { border-color:var(--accent); background:rgba(108,99,255,0.06); }
+  .form-input.no-icon { padding-left:16px; }
+
+  .modal-msg { font-size:13px; padding:11px 14px; border-radius:10px; display:none; align-items:center; gap:8px; margin-bottom:14px; }
+  .modal-msg.error { display:flex; background:rgba(255,94,126,0.1); color:var(--error); border:1px solid rgba(255,94,126,0.2); }
+  .modal-msg.success { display:flex; background:rgba(0,212,170,0.1); color:var(--accent2); border:1px solid rgba(0,212,170,0.2); }
+
+  /* PIN dots inside modal */
+  .pin-dots { display:flex; justify-content:center; gap:16px; margin:8px 0 28px; }
+  .pin-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--border); background:transparent; transition:all 0.2s cubic-bezier(0.34,1.4,0.64,1); }
+  .pin-dot.filled { background:var(--accent); border-color:var(--accent); transform:scale(1.15); box-shadow:0 0 12px rgba(108,99,255,0.5); }
+  .pin-dot.error-dot { background:var(--error); border-color:var(--error); animation:shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+
+  .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:300px; margin:0 auto; }
+  .num-key { height:64px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:background 0.15s,transform 0.1s; user-select:none; -webkit-tap-highlight-color:transparent; }
+  .num-key:active { background:rgba(108,99,255,0.15); border-color:rgba(108,99,255,0.3); transform:scale(0.94); }
+  .num-key.empty { background:transparent; border-color:transparent; cursor:default; }
+  .num-key.empty:active { background:transparent; transform:none; }
+  .num-digit { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; line-height:1; }
+  .num-letters { font-size:9px; color:var(--muted); letter-spacing:0.1em; margin-top:2px; }
+
+  .btn { width:100%; padding:17px; border-radius:14px; border:none; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:transform 0.15s,opacity 0.15s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:linear-gradient(135deg,var(--accent),#8b83ff); color:white; box-shadow:0 6px 24px rgba(108,99,255,0.3); margin-top:4px; }
+  .btn-ghost { background:var(--card); border:1px solid var(--border); color:var(--muted); margin-top:10px; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; display:none; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* Warning box */
+  .warn-box { background:rgba(247,201,72,0.07); border:1px solid rgba(247,201,72,0.2); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; color:var(--gold); line-height:1.6; display:flex; gap:8px; align-items:flex-start; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:#1e1e2e; border:1px solid var(--border); border-radius:12px; padding:12px 20px; font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; z-index:999; transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1); white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:rgba(0,212,170,0.3); color:var(--accent2); }
+  .toast.error { border-color:rgba(255,94,126,0.3); color:var(--error); }
+  .toast.info { border-color:rgba(108,99,255,0.3); color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ══ WITHDRAW MODAL ══ -->
+<div class="modal-overlay" id="withdrawModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Withdraw Funds</div>
+    <p class="modal-sub">Choose your method and enter details</p>
+
+    <!-- Step 1: Method + details -->
+    <div id="withdrawStep1">
+      <div class="warn-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Minimum withdrawal is <strong>$1.00</strong>. Processed within 24 hours. Make sure your address is correct — crypto sends cannot be reversed.
+      </div>
+
+      <div class="method-grid">
+        <div class="method-item selected" onclick="selectMethod('usdt_bep20')" id="m_usdt_bep20">
+          <div class="method-logo" style="background:rgba(240,185,11,0.12);">
+            <svg width="24" height="24" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F0B90B"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="bold" fill="white">BNB</text></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name">USDT BEP-20</div>
+            <div class="method-desc">Binance Smart Chain · Low fees</div>
+          </div>
+          <div class="method-radio"></div>
+        </div>
+        <div class="method-item" onclick="selectMethod('usdt_trc20')" id="m_usdt_trc20">
+          <div class="method-logo" style="background:rgba(235,0,0,0.1);">
+            <svg width="24" height="24" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#EB0000"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="bold" fill="white">TRX</text></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name">USDT TRC-20</div>
+            <div class="method-desc">Tron Network · Very low fees</div>
+          </div>
+          <div class="method-radio"></div>
+        </div>
+        <div class="method-item" onclick="selectMethod('paypal')" id="m_paypal">
+          <div class="method-logo" style="background:rgba(0,48,135,0.15);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#003087"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name">PayPal</div>
+            <div class="method-desc">PayPal email address</div>
+          </div>
+          <div class="method-radio"></div>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <div class="form-label" id="addressLabel">Wallet Address (BEP-20)</div>
+        <div class="form-input-wrap">
+          <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+          <input class="form-input" type="text" id="withdrawAddress" placeholder="Enter your wallet address"/>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <div class="form-label">Amount (USD)</div>
+        <div class="form-input-wrap">
+          <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <input class="form-input" type="number" id="withdrawAmount" placeholder="Min $1.00" step="0.01" min="1"/>
+        </div>
+      </div>
+
+      <div class="modal-msg" id="withdrawMsg1"></div>
+      <button class="btn btn-primary" onclick="withdrawNext()">Continue →</button>
+      <button class="btn btn-ghost" onclick="closeModal('withdrawModal')">Cancel</button>
+    </div>
+
+    <!-- Step 2: PIN confirmation -->
+    <div id="withdrawStep2" style="display:none;">
+      <p style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:4px;">Enter your withdrawal PIN to confirm</p>
+      <p style="text-align:center;font-size:14px;font-weight:600;margin-bottom:20px;" id="withdrawSummary"></p>
+
+      <div class="pin-dots">
+        <div class="pin-dot" id="wd0"></div>
+        <div class="pin-dot" id="wd1"></div>
+        <div class="pin-dot" id="wd2"></div>
+        <div class="pin-dot" id="wd3"></div>
+      </div>
+
+      <div class="numpad">
+        <div class="num-key" onclick="wdPin('1')"><div class="num-digit">1</div></div>
+        <div class="num-key" onclick="wdPin('2')"><div class="num-digit">2</div><div class="num-letters">ABC</div></div>
+        <div class="num-key" onclick="wdPin('3')"><div class="num-digit">3</div><div class="num-letters">DEF</div></div>
+        <div class="num-key" onclick="wdPin('4')"><div class="num-digit">4</div><div class="num-letters">GHI</div></div>
+        <div class="num-key" onclick="wdPin('5')"><div class="num-digit">5</div><div class="num-letters">JKL</div></div>
+        <div class="num-key" onclick="wdPin('6')"><div class="num-digit">6</div><div class="num-letters">MNO</div></div>
+        <div class="num-key" onclick="wdPin('7')"><div class="num-digit">7</div><div class="num-letters">PQRS</div></div>
+        <div class="num-key" onclick="wdPin('8')"><div class="num-digit">8</div><div class="num-letters">TUV</div></div>
+        <div class="num-key" onclick="wdPin('9')"><div class="num-digit">9</div><div class="num-letters">WXYZ</div></div>
+        <div class="num-key empty"></div>
+        <div class="num-key" onclick="wdPin('0')"><div class="num-digit">0</div></div>
+        <div class="num-key" onclick="wdPinDel()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="13" y2="14"/><line x1="13" y1="9" x2="18" y2="14"/></svg></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:16px;" onclick="withdrawBack()">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSFER MODAL ══ -->
+<div class="modal-overlay" id="transferModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Transfer to User</div>
+    <p class="modal-sub">Send balance to another Protege user using their phone number</p>
+
+    <div id="transferStep1">
+      <div class="form-field">
+        <div class="form-label">Recipient Phone Number</div>
+        <div class="form-input-wrap">
+          <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 10.5 19.79 19.79 0 0 1 1.61 2a2 2 0 0 1 2-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 7.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <input class="form-input" type="tel" id="transferPhone" placeholder="e.g. +2348012345678"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <div class="form-label">Amount (USD)</div>
+        <div class="form-input-wrap">
+          <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <input class="form-input" type="number" id="transferAmount" placeholder="Amount to send" step="0.01" min="0.01"/>
+        </div>
+      </div>
+      <div class="modal-msg" id="transferMsg1"></div>
+      <button class="btn btn-primary" onclick="transferNext()">Continue →</button>
+      <button class="btn btn-ghost" onclick="closeModal('transferModal')">Cancel</button>
+    </div>
+
+    <div id="transferStep2" style="display:none;">
+      <p style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:4px;">Enter your withdrawal PIN to confirm</p>
+      <p style="text-align:center;font-size:14px;font-weight:600;margin-bottom:20px;" id="transferSummary"></p>
+      <div class="pin-dots">
+        <div class="pin-dot" id="tr0"></div><div class="pin-dot" id="tr1"></div>
+        <div class="pin-dot" id="tr2"></div><div class="pin-dot" id="tr3"></div>
+      </div>
+      <div class="numpad">
+        <div class="num-key" onclick="trPin('1')"><div class="num-digit">1</div></div>
+        <div class="num-key" onclick="trPin('2')"><div class="num-digit">2</div><div class="num-letters">ABC</div></div>
+        <div class="num-key" onclick="trPin('3')"><div class="num-digit">3</div><div class="num-letters">DEF</div></div>
+        <div class="num-key" onclick="trPin('4')"><div class="num-digit">4</div><div class="num-letters">GHI</div></div>
+        <div class="num-key" onclick="trPin('5')"><div class="num-digit">5</div><div class="num-letters">JKL</div></div>
+        <div class="num-key" onclick="trPin('6')"><div class="num-digit">6</div><div class="num-letters">MNO</div></div>
+        <div class="num-key" onclick="trPin('7')"><div class="num-digit">7</div><div class="num-letters">PQRS</div></div>
+        <div class="num-key" onclick="trPin('8')"><div class="num-digit">8</div><div class="num-letters">TUV</div></div>
+        <div class="num-key" onclick="trPin('9')"><div class="num-digit">9</div><div class="num-letters">WXYZ</div></div>
+        <div class="num-key empty"></div>
+        <div class="num-key" onclick="trPin('0')"><div class="num-digit">0</div></div>
+        <div class="num-key" onclick="trPinDel()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="13" y2="14"/><line x1="13" y1="9" x2="18" y2="14"/></svg></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:16px;" onclick="transferBack()">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE ══ -->
+<div class="page">
+  <div class="header">
+    <a href="dashboard.html" class="back-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <div class="header-title">Referral & Earnings</div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div class="balance-label"><div class="balance-dot"></div>Total Balance</div>
+    <div class="balance-amount"><span>$</span><span id="balanceAmt">0.00</span></div>
+    <div class="balance-sub" id="balanceSub">Loading your earnings...</div>
+    <div class="balance-stats">
+      <div class="stat"><div class="stat-value gold" id="totalRefs">0</div><div class="stat-label">Referrals</div></div>
+      <div class="stat"><div class="stat-value" id="earnedTotal">$0.00</div><div class="stat-label">Earned</div></div>
+      <div class="stat"><div class="stat-value" id="pendingTotal" style="color:var(--gold)">$0.00</div><div class="stat-label">Pending</div></div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-row">
+    <div class="action-btn" onclick="openModal('withdrawModal')">
+      <div class="action-icon" style="background:rgba(247,201,72,0.1);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="action-label">Withdraw</div>
+      <div class="action-sub">USDT · PayPal</div>
+    </div>
+    <div class="action-btn" onclick="openModal('transferModal')">
+      <div class="action-icon" style="background:rgba(108,99,255,0.1);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="action-label">Transfer</div>
+      <div class="action-sub">To Protege user</div>
+    </div>
+    <div class="action-btn" onclick="shareGeneral()">
+      <div class="action-icon" style="background:rgba(0,212,170,0.1);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </div>
+      <div class="action-label">Share</div>
+      <div class="action-sub">Invite friends</div>
+    </div>
+  </div>
+
+  <!-- Referral Code -->
+  <div class="section-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    Your Referral Code
+  </div>
+  <div class="code-box">
+    <div class="code-display">
+      <div class="code-text" id="refCode">------</div>
+      <button class="copy-btn" id="copyBtn" onclick="copyCode()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="earn-info">
+      <div class="earn-badge you"><div class="earn-badge-amount">+$0.10</div><div class="earn-badge-label">You earn per referral</div></div>
+      <div class="earn-badge them"><div class="earn-badge-amount">+$0.50</div><div class="earn-badge-label">Your friend gets</div></div>
+    </div>
+  </div>
+
+  <!-- Share -->
+  <div class="section-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    Share & Earn
+  </div>
+  <div class="share-grid">
+    <div class="share-btn" onclick="shareWA()">
+      <div class="share-icon" style="background:rgba(37,211,102,0.12);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.847L.057 23.882l6.195-1.624A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.373l-.358-.214-3.724.976.994-3.62-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
+      </div>WhatsApp
+    </div>
+    <div class="share-btn" onclick="shareTG()">
+      <div class="share-icon" style="background:rgba(41,169,235,0.12);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#29A9EB"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.894-.904c-.63-.197-.643-.63.132-.93l11.286-4.354c.526-.19.986.13.81.462z"/></svg>
+      </div>Telegram
+    </div>
+    <div class="share-btn" onclick="shareTW()">
+      <div class="share-icon" style="background:rgba(255,255,255,0.06);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </div>Twitter
+    </div>
+    <div class="share-btn" onclick="shareFB()">
+      <div class="share-icon" style="background:rgba(24,119,242,0.12);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+      </div>Facebook
+    </div>
+    <div class="share-btn" onclick="shareSMS()">
+      <div class="share-icon" style="background:rgba(0,212,170,0.1);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>Messages
+    </div>
+  </div>
+
+  <!-- Transactions -->
+  <div class="section-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    Transaction History
+  </div>
+  <div id="txList">
+    <div class="tx-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.4"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><br/>
+      No transactions yet.<br/><span style="font-size:12px;color:var(--muted);margin-top:6px;display:block;">Share your code and start earning!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+let userCode = '', userName = '', userBalance = 0, deviceId = localStorage.getItem('protege_device_id') || '';
+let selectedMethod = 'usdt_bep20';
+let wdPinVal = '', trPinVal = '';
+
+// ── Load user + transactions ──
+async function loadAll() {
+  const token = localStorage.getItem('protege_token');
+  if (!token) { window.location.href = 'login.html'; return; }
+
+  try {
+    const [meRes, txRes, wdRes] = await Promise.all([
+      fetch(`${API}/api/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${API}/api/transactions`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${API}/api/withdrawals`, { headers: { 'Authorization': `Bearer ${token}` } })
+    ]);
+
+    const meData = await meRes.json();
+    if (!meData.success) { window.location.href = 'login.html'; return; }
+
+    const user = meData.user;
+    userCode = user.referral_code || '------';
+    userBalance = parseFloat(user.balance || 0);
+    const refs = user.total_referrals || 0;
+    const earned = (parseFloat(user.balance) + (refs * 0)).toFixed(2);
+
+    document.getElementById('balanceAmt').textContent = userBalance.toFixed(2);
+    document.getElementById('balanceSub').textContent = refs > 0
+      ? `From ${refs} successful referral${refs > 1 ? 's' : ''}` : 'Invite friends to start earning';
+    document.getElementById('refCode').textContent = userCode;
+    document.getElementById('totalRefs').textContent = refs;
+    document.getElementById('earnedTotal').textContent = `$${userBalance.toFixed(2)}`;
+
+    // Transactions
+    const txData = await txRes.json();
+    const wdData = await wdRes.json();
+
+    let pendingTotal = 0;
+    if (wdData.success) {
+      wdData.withdrawals.forEach(w => { if (w.status === 'pending') pendingTotal += parseFloat(w.amount); });
+    }
+    document.getElementById('pendingTotal').textContent = `$${pendingTotal.toFixed(2)}`;
+
+    renderTransactions(txData.success ? txData.transactions : [], wdData.success ? wdData.withdrawals : []);
+
+  } catch(e) { console.error('Load failed', e); }
+}
+
+function renderTransactions(txs, withdrawals) {
+  const list = document.getElementById('txList');
+  const all = [];
+
+  // Merge transactions and withdrawal requests
+  txs.forEach(t => all.push({ ...t, _type: 'tx' }));
+  withdrawals.forEach(w => {
+    if (!txs.find(t => t.description && t.description.includes(w.address))) {
+      all.push({ ...w, _type: 'wd' });
+    }
+  });
+
+  if (all.length === 0) {
+    list.innerHTML = `<div class="tx-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.4"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><br/>No transactions yet.<br/><span style="font-size:12px;color:var(--muted);margin-top:6px;display:block;">Share your code and start earning!</span></div>`;
+    return;
+  }
+
+  // Sort newest first
+  all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  list.innerHTML = all.map(t => {
+    const isCredit = parseFloat(t.amount) > 0;
+    const date = new Date(t.created_at).toLocaleDateString([], { day:'numeric', month:'short', year:'numeric' });
+    const time = new Date(t.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const amt = Math.abs(parseFloat(t.amount)).toFixed(2);
+
+    // Icon and label based on type
+    let iconClass = isCredit ? 'credit' : 'debit';
+    let label = t.description || t.type;
+    let statusBadge = '';
+    let iconSvg = '';
+
+    if (t.type === 'referral_bonus') {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+      label = 'Referral Bonus';
+    } else if (t.type === 'signup_bonus') {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+      label = 'Welcome Bonus';
+    } else if (t.type === 'withdraw') {
+      iconClass = 'pending';
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`;
+      const status = t.status || 'pending';
+      statusBadge = `<span class="tx-status ${status}">${status}</span>`;
+      label = 'Withdrawal';
+    } else if (t.type === 'transfer') {
+      iconSvg = isCredit
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+      label = isCredit ? 'Transfer Received' : 'Transfer Sent';
+    } else {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>`;
+    }
+
+    return `
+      <div class="tx-item">
+        <div class="tx-icon ${iconClass}">${iconSvg}</div>
+        <div class="tx-info">
+          <div class="tx-label">${label}</div>
+          <div class="tx-date">${date} · ${time}</div>
+          ${statusBadge}
+        </div>
+        <div class="tx-amount ${isCredit ? 'credit' : 'debit'}">${isCredit ? '+' : '-'}$${amt}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Method selector ──
+function selectMethod(m) {
+  selectedMethod = m;
+  document.querySelectorAll('.method-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`m_${m}`).classList.add('selected');
+  const labels = { usdt_bep20:'Wallet Address (BEP-20)', usdt_trc20:'Wallet Address (TRC-20)', paypal:'PayPal Email' };
+  const placeholders = { usdt_bep20:'Enter BEP-20 wallet address', usdt_trc20:'Enter TRC-20 wallet address', paypal:'Enter PayPal email' };
+  document.getElementById('addressLabel').textContent = labels[m];
+  document.getElementById('withdrawAddress').placeholder = placeholders[m];
+}
+
+// ── Withdraw flow ──
+function withdrawNext() {
+  const address = document.getElementById('withdrawAddress').value.trim();
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
+  const msgEl = document.getElementById('withdrawMsg1');
+
+  if (!address) return showModalMsg('withdrawMsg1', 'error', 'Please enter your wallet address or PayPal email');
+  if (!amount || amount < 1) return showModalMsg('withdrawMsg1', 'error', 'Minimum withdrawal is $1.00');
+  if (amount > userBalance) return showModalMsg('withdrawMsg1', 'error', `Insufficient balance. Your balance is $${userBalance.toFixed(2)}`);
+
+  msgEl.className = 'modal-msg';
+  const methodNames = { usdt_bep20:'USDT (BEP-20)', usdt_trc20:'USDT (TRC-20)', paypal:'PayPal' };
+  document.getElementById('withdrawSummary').textContent = `$${amount.toFixed(2)} via ${methodNames[selectedMethod]}`;
+  document.getElementById('withdrawStep1').style.display = 'none';
+  document.getElementById('withdrawStep2').style.display = 'block';
+  wdPinVal = '';
+  updateWdDots(0);
+}
+function withdrawBack() {
+  document.getElementById('withdrawStep1').style.display = 'block';
+  document.getElementById('withdrawStep2').style.display = 'none';
+  wdPinVal = '';
+}
+function wdPin(d) {
+  if (wdPinVal.length >= 4) return;
+  wdPinVal += d;
+  updateWdDots(wdPinVal.length);
+  if (wdPinVal.length === 4) setTimeout(submitWithdraw, 180);
+}
+function wdPinDel() { if (wdPinVal.length > 0) { wdPinVal = wdPinVal.slice(0,-1); updateWdDots(wdPinVal.length); } }
+function updateWdDots(n) { ['wd0','wd1','wd2','wd3'].forEach((id,i) => { document.getElementById(id).className = 'pin-dot' + (i < n ? ' filled' : ''); }); }
+function shakeWdDots() { ['wd0','wd1','wd2','wd3'].forEach(id => { document.getElementById(id).className = 'pin-dot error-dot'; }); setTimeout(() => { wdPinVal=''; updateWdDots(0); }, 700); }
+
+async function submitWithdraw() {
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
+  const address = document.getElementById('withdrawAddress').value.trim();
+  try {
+    const res = await fetch(`${API}/api/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${localStorage.getItem('protege_token')}` },
+      body: JSON.stringify({ amount, method: selectedMethod, address, pin: wdPinVal, device_id: deviceId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      ['wd0','wd1','wd2','wd3'].forEach(id => { document.getElementById(id).className = 'pin-dot filled'; document.getElementById(id).style.background='var(--accent2)'; document.getElementById(id).style.borderColor='var(--accent2)'; });
+      userBalance = data.new_balance;
+      document.getElementById('balanceAmt').textContent = userBalance.toFixed(2);
+      showToast(data.message, 'success');
+      setTimeout(() => { closeModal('withdrawModal'); loadAll(); }, 1200);
+    } else {
+      shakeWdDots();
+      showToast(data.message || 'Failed. Check your PIN.', 'error');
+    }
+  } catch(e) { shakeWdDots(); showToast('Connection error. Try again.', 'error'); }
+}
+
+// ── Transfer flow ──
+function transferNext() {
+  const phone = document.getElementById('transferPhone').value.trim();
+  const amount = parseFloat(document.getElementById('transferAmount').value);
+  if (!phone) return showModalMsg('transferMsg1', 'error', 'Enter recipient phone number');
+  if (!amount || amount <= 0) return showModalMsg('transferMsg1', 'error', 'Enter a valid amount');
+  if (amount > userBalance) return showModalMsg('transferMsg1', 'error', `Insufficient balance. Your balance is $${userBalance.toFixed(2)}`);
+
+  document.getElementById('transferSummary').textContent = `$${amount.toFixed(2)} to ${phone}`;
+  document.getElementById('transferStep1').style.display = 'none';
+  document.getElementById('transferStep2').style.display = 'block';
+  trPinVal = '';
+  updateTrDots(0);
+}
+function transferBack() {
+  document.getElementById('transferStep1').style.display = 'block';
+  document.getElementById('transferStep2').style.display = 'none';
+  trPinVal = '';
+}
+function trPin(d) {
+  if (trPinVal.length >= 4) return;
+  trPinVal += d;
+  updateTrDots(trPinVal.length);
+  if (trPinVal.length === 4) setTimeout(submitTransfer, 180);
+}
+function trPinDel() { if (trPinVal.length > 0) { trPinVal = trPinVal.slice(0,-1); updateTrDots(trPinVal.length); } }
+function updateTrDots(n) { ['tr0','tr1','tr2','tr3'].forEach((id,i) => { document.getElementById(id).className = 'pin-dot' + (i < n ? ' filled' : ''); }); }
+function shakeTrDots() { ['tr0','tr1','tr2','tr3'].forEach(id => { document.getElementById(id).className = 'pin-dot error-dot'; }); setTimeout(() => { trPinVal=''; updateTrDots(0); }, 700); }
+
+async function submitTransfer() {
+  const phone = document.getElementById('transferPhone').value.trim();
+  const amount = parseFloat(document.getElementById('transferAmount').value);
+  try {
+    const res = await fetch(`${API}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${localStorage.getItem('protege_token')}` },
+      body: JSON.stringify({ to_phone: phone, amount, pin: trPinVal, device_id: deviceId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      ['tr0','tr1','tr2','tr3'].forEach(id => { document.getElementById(id).className = 'pin-dot filled'; document.getElementById(id).style.background='var(--accent2)'; document.getElementById(id).style.borderColor='var(--accent2)'; });
+      userBalance = data.new_balance;
+      document.getElementById('balanceAmt').textContent = userBalance.toFixed(2);
+      showToast(data.message, 'success');
+      setTimeout(() => { closeModal('transferModal'); loadAll(); }, 1200);
+    } else {
+      shakeTrDots();
+      showToast(data.message || 'Failed. Check your PIN.', 'error');
+    }
+  } catch(e) { shakeTrDots(); showToast('Connection error. Try again.', 'error'); }
+}
+
+// ── Helpers ──
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+  if (id === 'withdrawModal') { document.getElementById('withdrawStep1').style.display='block'; document.getElementById('withdrawStep2').style.display='none'; wdPinVal=''; }
+  if (id === 'transferModal') { document.getElementById('transferStep1').style.display='block'; document.getElementById('transferStep2').style.display='none'; trPinVal=''; }
+}
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target===o) closeModal(o.id); }));
+
+function showModalMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = `modal-msg ${type}`;
+  el.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${text}`;
+}
+
+function copyCode() {
+  const fallback = () => { const el=document.createElement('textarea'); el.value=userCode; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); };
+  try { navigator.clipboard.writeText(userCode).catch(fallback); } catch(e) { fallback(); }
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✓ Copied'; btn.classList.add('copied');
+  showToast('Referral code copied!', 'success');
+  setTimeout(() => { btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy`; btn.classList.remove('copied'); }, 2000);
+}
+
+function getShareText() { return `🎙️ Hey! I use *Protege* — an AI voice calculator that solves Maths, Physics & Chemistry instantly. It's FREE with no ads!\n\nJoin using my referral code *${userCode}* and get *$0.50* bonus! 🎉\n\nDownload: https://protege-app.com`; }
+function shareWA() { window.open(`https://wa.me/?text=${encodeURIComponent(getShareText())}`, '_blank'); }
+function shareTG() { window.open(`https://t.me/share/url?url=https://protege-app.com&text=${encodeURIComponent(getShareText())}`, '_blank'); }
+function shareTW() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🎙️ Protege — AI voice calculator for Maths, Physics & Chemistry. FREE forever!\nUse my code *${userCode}* for $0.50 bonus! 🎉`)}`, '_blank'); }
+function shareFB() { window.open(`https://www.facebook.com/sharer/sharer.php?u=https://protege-app.com`, '_blank'); }
+function shareSMS() { window.open(`sms:?body=${encodeURIComponent(getShareText())}`, '_blank'); }
+function shareGeneral() { if (navigator.share) { navigator.share({ title:'Join Protege AI', text:getShareText(), url:'https://protege-app.com' }).catch(()=>{}); } else { copyCode(); } }
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  const icons = { success:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`, error:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`, info:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` };
+  t.className = `toast ${type} show`;
+  t.innerHTML = `${icons[type]}${msg}`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+window.addEventListener('load', loadAll);
+</script>
+</body>
+</html>
