@@ -1,161 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Signup - Protege AI</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<title>Protege AI – Welcome</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
 <style>
-  * { box-sizing: border-box; margin:0; padding:0; }
-  html, body { height:100%; font-family:'Nunito',sans-serif; background:#080814; display:flex; justify-content:center; align-items:center; }
-  :root {
-    --bg:#05050F;
-    --accent:#7C5CFC;
-    --accent2:#C084FC;
-    --white:#fff;
-    --muted:#8A85A8;
-    --card:#0F0F22;
-    --border: rgba(124,92,252,0.2);
-  }
+*{box-sizing:border-box;margin:0;padding:0}
 
-  .phone {
-    width:100%;
-    max-width:420px;
-    height:100vh;
-    background:var(--bg);
-    border-radius:40px;
-    border:1.5px solid rgba(255,255,255,0.07);
-    box-shadow:0 0 0 9px #06060f,0 0 0 11px rgba(255,255,255,0.035),0 50px 120px rgba(0,0,0,0.85),0 0 60px rgba(124,92,252,0.08) inset;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    position:relative;
-  }
+:root{
+  --bg:#070712;
+  --accent:#7C5CFC;
+  --accent2:#C084FC;
+  --accent3:#38BDF8;
+  --muted:#9CA3AF;
+}
 
-  .top-bar {
-    display:flex; align-items:center; gap:16px; padding:20px 24px;
-    font-weight:800; font-size:18px; color:white; background:rgba(0,0,0,0.1); position:sticky; top:0; z-index:10;
-  }
-  .back-btn { cursor:pointer; font-size:24px; font-weight:900; color:white; transition:0.2s;}
-  .back-btn:hover{opacity:0.8;}
+html,body{
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle at 30% 20%,#0f0f2a, #05050d 60%);
+  font-family:'Nunito',sans-serif;
+  overflow:hidden;
+}
 
-  .screen {
-    flex:1; display:flex; flex-direction:column; align-items:center;
-    padding:24px 24px 36px; overflow-y:auto; scroll-behavior:smooth; position:relative;
-  }
+/* Animated neon gradient background */
+body::before{
+  content:"";
+  position:absolute;
+  width:150%;
+  height:150%;
+  background:conic-gradient(from 0deg,#7C5CFC,#38BDF8,#C084FC,#7C5CFC);
+  filter:blur(120px);
+  opacity:.25;
+  animation:rotate 18s linear infinite;
+}
 
-  /* blobs */
-  .blob1,.blob2{position:absolute; border-radius:50%; pointer-events:none; animation:pulse 5s ease-in-out infinite;}
-  .blob1{width:300px;height:300px;background:radial-gradient(circle, rgba(124,92,252,0.18) 0%, transparent 65%);top:-60px; left:50%; transform:translateX(-50%);}
-  .blob2{width:220px;height:220px;background:radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 65%); bottom:100px; right:-60px; animation-duration:6s; animation-direction:reverse;}
-  @keyframes pulse{0%,100%{transform:translateX(-50%) scale(1);opacity:0.7;}50%{transform:translateX(-50%) scale(1.1);opacity:1;}}
+@keyframes rotate{
+  to{transform:rotate(360deg)}
+}
 
-  .hero{width:100%; height:220px; border-radius:28px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; margin-top:24px; margin-bottom:24px; position:relative;}
-  .hero span{font-size:48px; animation:spin 1.5s linear infinite; display:none;}
-  @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.container{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:420px;
+  padding:28px;
+  border-radius:28px;
+  background:rgba(15,15,34,0.7);
+  backdrop-filter:blur(18px);
+  border:1px solid rgba(124,92,252,.25);
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  text-align:center;
+}
 
-  .text-block{width:100%; display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;}
-  .app-label{font-size:12px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent);}
-  .app-title{font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:white;}
-  .app-sub{font-size:14px; color:var(--muted); line-height:1.5; max-width:280px;}
+/* Hero circle */
+.hero{
+  height:190px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:22px;
+}
 
-  .input-group{display:flex; align-items:center; background:var(--card); border-radius:16px; padding:14px 16px; margin-bottom:16px; gap:8px; width:100%;}
-  select,input{background:transparent; border:none; outline:none; color:white; font-size:16px;}
-  select{min-width:100px;} input{flex:1;}
+.mic{
+  width:78px;
+  height:78px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  box-shadow:0 0 45px rgba(124,92,252,.7);
+  animation:pulse 2.8s infinite ease-in-out;
+}
 
-  .btn{width:100%; padding:16px; border:none; border-radius:16px; cursor:pointer; font-family:'Syne',sans-serif; font-size:18px; font-weight:800; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; margin-top:12px; transition:0.2s;}
-  .btn:active{transform:scale(0.97);}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
 
-  .error-msg{color:#FF6B6B; font-size:14px; margin-top:8px; text-align:center;}
+.title{
+  font-family:'Syne',sans-serif;
+  font-size:30px;
+  font-weight:800;
+  background:linear-gradient(135deg,#fff,#c4b5fd,#38BDF8);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin-bottom:10px;
+}
+
+.sub{
+  font-size:16px;
+  color:var(--muted);
+  margin-bottom:28px;
+  line-height:1.4;
+  padding: 0 12px;
+  word-wrap: break-word;
+}
+
+/* Buttons */
+.btn{
+  width:100%;
+  height:54px;
+  border-radius:14px;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  margin-bottom:12px;
+  font-family:'Syne',sans-serif;
+  font-size:15px;
+}
+
+.primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  box-shadow:0 10px 30px rgba(124,92,252,.5);
+}
+
+.secondary{
+  background:transparent;
+  border:1.5px solid rgba(124,92,252,.35);
+  color:#c7c3ff;
+}
 </style>
 </head>
+
 <body>
 
-<div class="phone">
-  <div class="top-bar">
-    <div class="back-btn" onclick="goBack()">←</div>
-    <span>Sign Up</span>
+<div class="container">
+
+  <div class="hero">
+    <div class="mic"></div>
   </div>
 
-  <div class="screen">
-    <div class="blob1"></div>
-    <div class="blob2"></div>
+  <h1 class="title">Protege AI</h1>
+  <p class="sub">
+    Calculate anything instantly with the power of artificial intelligence.
+  </p>
 
-    <div class="hero"><span id="loading">🅿️</span></div>
+  <button class="btn primary" id="btn_get_started">🚀 Get Started</button>
+  <button class="btn secondary" id="btn_sign_in">Already have an account? Sign in</button>
 
-    <div class="text-block">
-      <span class="app-label">Protege AI</span>
-      <h1 class="app-title">Create Account</h1>
-      <p class="app-sub">Enter your phone, name, password, and optional referral code</p>
-    </div>
-
-    <div class="input-group">
-      <input type="text" id="name" placeholder="Full Name" />
-    </div>
-    <div class="input-group">
-      <input type="tel" id="phone" placeholder="Phone Number"/>
-    </div>
-    <div class="input-group">
-      <input type="password" id="password" placeholder="Password (min 6, letters+numbers)" />
-    </div>
-    <div class="input-group">
-      <input type="text" id="referral" placeholder="Referral Code (optional)"/>
-    </div>
-
-    <button class="btn" onclick="submitSignup()">Sign Up</button>
-    <div class="error-msg" id="error"></div>
-  </div>
 </div>
 
 <script>
-function goBack(){ window.history.back(); }
-
-function getDeviceId(){ return localStorage.getItem("device_id") || crypto.randomUUID(); }
-
-function validatePassword(p){
-  const re = /^[A-Za-z0-9]{6,}$/;
-  return re.test(p);
-}
-
-async function submitSignup(){
-  const errorEl = document.getElementById("error");
-  errorEl.textContent = "";
-
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const referral = document.getElementById("referral").value.trim();
-  const device_id = getDeviceId();
-  localStorage.setItem("device_id", device_id);
-
-  if(!name){ errorEl.textContent="Please enter your name"; return; }
-  if(!phone){ errorEl.textContent="Please enter your phone"; return; }
-  if(!password){ errorEl.textContent="Please enter a password"; return; }
-  if(!validatePassword(password)){ errorEl.textContent="Password must be at least 6 characters and contain only letters and numbers"; return; }
-
-  const loadingEl = document.getElementById("loading");
-  loadingEl.style.display="inline-block";
-
-  try{
-    const res = await fetch("https://sample-api-1-ryj7.onrender.com/api/signup",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({name, phone, password, referral, device_id})
-    });
-    const data = await res.json();
-    loadingEl.style.display="none";
-
-    if(data.success){
-      localStorage.setItem("token", data.token);
-      window.location.href="dashboard.html";
-    }else{
-      errorEl.textContent = data.message;
-    }
-  }catch(err){
-    loadingEl.style.display="none";
-    errorEl.textContent="Network error, please try again";
-  }
-}
+/* Navigation */
+document.getElementById("btn_get_started").onclick = () => location.href = "signup.html";
+document.getElementById("btn_sign_in").onclick = () => location.href = "login.html";
 </script>
 
 </body>
