@@ -614,7 +614,7 @@ async function doSignup() {
   document.getElementById('btnArrow').style.display = 'none';
 
   try {
-    const res = await fetch('https://YOUR_BACKEND_URL/api/signup', {
+    const res = await fetch('https://sample-api-1-ryj7.onrender.com/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
