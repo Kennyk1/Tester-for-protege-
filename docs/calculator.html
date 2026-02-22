@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Protege Calc</title>
+<style>
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'DM Mono'; src:url('fonts/DMMono-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+  :root {
+    --bg: #09090e;
+    --surface: #111118;
+    --surface2: #17171f;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b9d;
+    --text: #f0f0f8;
+    --muted: #55556a;
+    --border: rgba(255,255,255,0.07);
+    --btn: rgba(255,255,255,0.06);
+    --btn-hover: rgba(255,255,255,0.1);
+    --btn-op: rgba(108,99,255,0.18);
+    --btn-eq: linear-gradient(135deg, #6c63ff, #9d96ff);
+    --btn-fn: rgba(0,212,170,0.12);
+    --btn-clear: rgba(255,107,157,0.15);
+    --radius: 18px;
+    --display-font: 'DM Sans', monospace;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  /* ── Background grid lines ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Orbs */
+  .orb { position:fixed; border-radius:50%; filter:blur(100px); pointer-events:none; z-index:0; }
+  .orb1 { width:300px; height:300px; background:rgba(108,99,255,0.12); top:-100px; right:-80px; }
+  .orb2 { width:200px; height:200px; background:rgba(0,212,170,0.08); bottom:80px; left:-60px; }
+
+  /* ── LAYOUT ── */
+  .app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 48px 20px 12px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .back-btn:active { background: var(--btn-hover); }
+
+  .topbar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .title-badge {
+    font-size: 10px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 6px;
+    padding: 2px 6px;
+    -webkit-text-fill-color: unset;
+    color: var(--accent);
+  }
+
+  .history-btn {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .history-btn:active { background: var(--btn-hover); }
+  .history-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    display: none;
+  }
+
+  /* ── MODE TABS ── */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 14px;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 12px;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: rgba(108,99,255,0.15);
+    border-color: rgba(108,99,255,0.35);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .tab:active { transform: scale(0.97); }
+
+  /* ── DISPLAY ── */
+  .display-area {
+    padding: 0 20px 12px;
+    flex-shrink: 0;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .display-expr {
+    font-family: var(--display-font);
+    font-size: 16px;
+    color: var(--muted);
+    text-align: right;
+    min-height: 24px;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .display-result {
+    font-family: 'Syne', sans-serif;
+    font-size: 56px;
+    font-weight: 800;
+    text-align: right;
+    line-height: 1;
+    padding: 4px 4px 0;
+    letter-spacing: -0.03em;
+    transition: font-size 0.2s, color 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .display-result.has-result {
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .display-result.error { color: var(--accent3); -webkit-text-fill-color: var(--accent3); }
+
+  .display-hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    padding: 4px 4px 0;
+    opacity: 0.6;
+    min-height: 18px;
+  }
+
+  /* ── EXPRESSION MODE DISPLAY ── */
+  .expr-input-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .expr-input-wrap.active { display: flex; }
+  .expr-textarea {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    resize: none;
+    height: 56px;
+    line-height: 1.4;
+    width: 100%;
+    caret-color: var(--accent);
+  }
+  .expr-textarea::placeholder { color: var(--muted); font-size: 15px; }
+  .expr-result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+  .expr-result-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+  .expr-ai-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.25);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .expr-ai-btn:active { background: rgba(108,99,255,0.25); }
+
+  /* ── BUTTON GRID ── */
+  .btn-area {
+    flex: 1;
+    padding: 0 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .btn-grid {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+  }
+  .btn-grid.active { display: flex; }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+  }
+
+  /* Calculator button */
+  .cb {
+    flex: 1;
+    border-radius: var(--radius);
+    background: var(--btn);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.08s, background 0.1s, box-shadow 0.1s;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .cb:active {
+    transform: scale(0.91);
+    box-shadow: 0 0 20px rgba(108,99,255,0.2);
+  }
+
+  /* Ripple on tap */
+  .cb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    opacity: 0;
+    border-radius: inherit;
+    transition: opacity 0.2s;
+  }
+  .cb:active::after { opacity: 1; }
+
+  /* Variants */
+  .cb.op {
+    background: var(--btn-op);
+    border-color: rgba(108,99,255,0.2);
+    color: #a09aff;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .cb.eq {
+    background: var(--btn-eq);
+    border: none;
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+  }
+  .cb.eq:active { box-shadow: 0 2px 10px rgba(108,99,255,0.3); }
+  .cb.clear {
+    background: var(--btn-clear);
+    border-color: rgba(255,107,157,0.2);
+    color: var(--accent3);
+    font-weight: 600;
+  }
+  .cb.fn {
+    background: var(--btn-fn);
+    border-color: rgba(0,212,170,0.15);
+    color: var(--accent2);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .cb.zero { flex: 2.1; justify-content: flex-start; padding-left: 24px; }
+  .cb.wide { flex: 2.1; }
+  .cb.num { font-size: 22px; font-weight: 500; }
+  .cb.muted-op { background: var(--btn); color: var(--muted); font-size: 18px; }
+  .cb.ai-send {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.3);
+    gap: 6px;
+  }
+  .cb.sci-fn {
+    font-size: 13px;
+    font-weight: 600;
+    color: #b8b0ff;
+    background: rgba(108,99,255,0.1);
+    border-color: rgba(108,99,255,0.15);
+  }
+  .cb.deg-toggle {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent2);
+    background: rgba(0,212,170,0.08);
+    border-color: rgba(0,212,170,0.15);
+  }
+
+  /* ── HISTORY PANEL ── */
+  .history-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 80%;
+    max-width: 320px;
+    background: #0f0f17;
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .history-panel.open { transform: translateX(0); }
+  .history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+    display: none;
+    backdrop-filter: blur(4px);
+  }
+  .history-overlay.open { display: block; }
+
+  .history-header {
+    padding: 52px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .history-clear {
+    font-size: 12px;
+    color: var(--accent3);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255,107,157,0.08);
+  }
+
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-list::-webkit-scrollbar { display: none; }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .history-item:active { border-color: var(--accent); }
+  .history-expr { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .history-res { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--text); }
+
+  .history-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 40px 20px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a26;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1);
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(0,212,170,0.3); color: var(--accent2); }
+  .toast.info { border-color: rgba(108,99,255,0.3); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="toast" id="toast"></div>
+
+<!-- History overlay -->
+<div class="history-overlay" id="historyOverlay" onclick="closeHistory()"></div>
+
+<!-- History panel -->
+<div class="history-panel" id="historyPanel">
+  <div class="history-header">
+    <div class="history-title">History</div>
+    <div class="history-clear" onclick="clearHistory()">Clear all</div>
+  </div>
+  <div class="history-list" id="historyList">
+    <div class="history-empty">No calculations yet</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a href="dashboard.html" class="back-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <div class="topbar-title">
+      Protege Calc
+      <span class="title-badge">AI</span>
+    </div>
+    <div class="history-btn" onclick="openHistory()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>
+      <div class="history-badge" id="historyBadge">0</div>
+    </div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <div class="tab active" id="tab-basic" onclick="switchMode('basic')">📱 Basic</div>
+    <div class="tab" id="tab-sci" onclick="switchMode('sci')">📐 Scientific</div>
+    <div class="tab" id="tab-expr" onclick="switchMode('expr')">📝 Expression</div>
+  </div>
+
+  <!-- Display -->
+  <div class="display-area">
+    <!-- Normal display (basic + sci) -->
+    <div id="normalDisplay">
+      <div class="display-expr" id="displayExpr"></div>
+      <div class="display-result" id="displayResult">0</div>
+      <div class="display-hint" id="displayHint">Long press = to solve with AI</div>
+    </div>
+    <!-- Expression mode input -->
+    <div class="expr-input-wrap" id="exprInputWrap">
+      <textarea class="expr-textarea" id="exprTextarea" placeholder="Type any expression&#10;e.g. 2x² + 3x - 5 where x=2" oninput="evalExpr()"></textarea>
+      <div class="expr-result-row">
+        <div class="expr-result-val" id="exprResult">—</div>
+        <div class="expr-ai-btn" onclick="sendExprToAI()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Solve with AI
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Button grids -->
+  <div class="btn-area">
+
+    <!-- ═══ BASIC MODE ═══ -->
+    <div class="btn-grid active" id="grid-basic">
+      <div class="btn-row">
+        <div class="cb clear" onclick="calc('AC')">AC</div>
+        <div class="cb muted-op" onclick="calc('±')">+/-</div>
+        <div class="cb muted-op" onclick="calc('%')">%</div>
+        <div class="cb op" onclick="calc('÷')">÷</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('7')">7</div>
+        <div class="cb num" onclick="calc('8')">8</div>
+        <div class="cb num" onclick="calc('9')">9</div>
+        <div class="cb op" onclick="calc('×')">×</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('4')">4</div>
+        <div class="cb num" onclick="calc('5')">5</div>
+        <div class="cb num" onclick="calc('6')">6</div>
+        <div class="cb op" onclick="calc('−')">−</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('1')">1</div>
+        <div class="cb num" onclick="calc('2')">2</div>
+        <div class="cb num" onclick="calc('3')">3</div>
+        <div class="cb op" onclick="calc('+')">+</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num zero" onclick="calc('0')">0</div>
+        <div class="cb num" onclick="calc('.')">.</div>
+        <div class="cb eq" onclick="calc('=')" oncontextmenu="longPressEq(event)">=</div>
+      </div>
+    </div>
+
+    <!-- ═══ SCIENTIFIC MODE ═══ -->
+    <div class="btn-grid" id="grid-sci">
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="calc('sin(')">sin</div>
+        <div class="cb sci-fn" onclick="calc('cos(')">cos</div>
+        <div class="cb sci-fn" onclick="calc('tan(')">tan</div>
+        <div class="cb deg-toggle" onclick="toggleDeg()" id="degBtn">DEG</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="calc('log(')">log</div>
+        <div class="cb sci-fn" onclick="calc('ln(')">ln</div>
+        <div class="cb sci-fn" onclick="calc('√(')">√</div>
+        <div class="cb sci-fn" onclick="calc('^')">xʸ</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="calc('π')">π</div>
+        <div class="cb sci-fn" onclick="calc('e')">e</div>
+        <div class="cb sci-fn" onclick="calc('(')"> ( </div>
+        <div class="cb sci-fn" onclick="calc(')')"> ) </div>
+      </div>
+      <div class="btn-row">
+        <div class="cb clear" onclick="calc('AC')">AC</div>
+        <div class="cb muted-op" onclick="calc('DEL')">⌫</div>
+        <div class="cb muted-op" onclick="calc('%')">%</div>
+        <div class="cb op" onclick="calc('÷')">÷</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('7')">7</div>
+        <div class="cb num" onclick="calc('8')">8</div>
+        <div class="cb num" onclick="calc('9')">9</div>
+        <div class="cb op" onclick="calc('×')">×</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('4')">4</div>
+        <div class="cb num" onclick="calc('5')">5</div>
+        <div class="cb num" onclick="calc('6')">6</div>
+        <div class="cb op" onclick="calc('−')">−</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num" onclick="calc('1')">1</div>
+        <div class="cb num" onclick="calc('2')">2</div>
+        <div class="cb num" onclick="calc('3')">3</div>
+        <div class="cb op" onclick="calc('+')">+</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb num zero" onclick="calc('0')">0</div>
+        <div class="cb num" onclick="calc('.')">.</div>
+        <div class="cb eq" onclick="calc('=')">=</div>
+      </div>
+    </div>
+
+    <!-- ═══ EXPRESSION MODE ═══ -->
+    <div class="btn-grid" id="grid-expr">
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="exprInsert('sin(')">sin</div>
+        <div class="cb sci-fn" onclick="exprInsert('cos(')">cos</div>
+        <div class="cb sci-fn" onclick="exprInsert('tan(')">tan</div>
+        <div class="cb sci-fn" onclick="exprInsert('√(')">√</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="exprInsert('log(')">log</div>
+        <div class="cb sci-fn" onclick="exprInsert('^')">xʸ</div>
+        <div class="cb sci-fn" onclick="exprInsert('π')">π</div>
+        <div class="cb sci-fn" onclick="exprInsert('e')">e</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb sci-fn" onclick="exprInsert('(')"> ( </div>
+        <div class="cb sci-fn" onclick="exprInsert(')')"> ) </div>
+        <div class="cb muted-op" onclick="exprClear()">Clear</div>
+        <div class="cb clear" onclick="exprBackspace()">⌫</div>
+      </div>
+      <div class="btn-row">
+        <div class="cb ai-send wide" onclick="sendExprToAI()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Solve with Protege AI
+        </div>
+        <div class="cb eq" onclick="evalExpr()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══ STATE ══
+let display = '0';
+let expression = '';
+let justCalced = false;
+let isDeg = true;
+let calcHistory = JSON.parse(localStorage.getItem('protege_calc_history') || '[]');
+let currentMode = 'basic';
+let longPressTimer = null;
+
+// Long press on = button
+const eqBtns = document.querySelectorAll('.cb.eq');
+eqBtns.forEach(btn => {
+  btn.addEventListener('touchstart', () => {
+    longPressTimer = setTimeout(() => { longPressEq(); }, 600);
+  });
+  btn.addEventListener('touchend', () => clearTimeout(longPressTimer));
+  btn.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+});
+
+function longPressEq(e) {
+  if (e) e.preventDefault();
+  if (expression || display !== '0') {
+    const q = expression || display;
+    sendToAI(q);
+  }
+}
+
+// ══ MODE SWITCH ══
+function switchMode(mode) {
+  currentMode = mode;
+  ['basic','sci','expr'].forEach(m => {
+    document.getElementById(`tab-${m}`).classList.toggle('active', m === mode);
+    document.getElementById(`grid-${m}`).classList.toggle('active', m === mode);
+  });
+  document.getElementById('normalDisplay').style.display = mode === 'expr' ? 'none' : 'block';
+  document.getElementById('exprInputWrap').classList.toggle('active', mode === 'expr');
+  if (mode === 'expr') {
+    document.getElementById('displayHint').textContent = '';
+    setTimeout(() => document.getElementById('exprTextarea').focus(), 100);
+  } else {
+    document.getElementById('displayHint').textContent = 'Long press = to solve with AI';
+  }
+}
+
+// ══ BASIC / SCIENTIFIC CALC ══
+function calc(val) {
+  const resEl = document.getElementById('displayResult');
+  const exprEl = document.getElementById('displayExpr');
+
+  // Haptic if available
+  if (navigator.vibrate) navigator.vibrate(10);
+
+  if (val === 'AC') {
+    display = '0'; expression = ''; justCalced = false;
+    resEl.className = 'display-result';
+    resEl.textContent = '0';
+    exprEl.textContent = '';
+    document.getElementById('displayHint').textContent = 'Long press = to solve with AI';
+    return;
+  }
+
+  if (val === 'DEL') {
+    if (display.length > 1) display = display.slice(0,-1);
+    else display = '0';
+    resEl.textContent = display;
+    return;
+  }
+
+  if (val === '=') {
+    if (!expression) return;
+    const result = evaluate(expression);
+    if (result === 'Error') {
+      resEl.className = 'display-result error';
+      resEl.textContent = 'Error';
+      setTimeout(() => { resEl.className='display-result'; resEl.textContent='0'; expression=''; display='0'; exprEl.textContent=''; }, 1200);
+    } else {
+      saveHistory(expression, result);
+      exprEl.textContent = expression + ' =';
+      display = result;
+      expression = '';
+      justCalced = true;
+      // Resize font for long numbers
+      const len = result.toString().length;
+      resEl.style.fontSize = len > 12 ? '32px' : len > 9 ? '42px' : '56px';
+      resEl.className = 'display-result has-result';
+      resEl.textContent = result;
+      document.getElementById('displayHint').textContent = 'Long press = to solve with AI ✨';
+    }
+    return;
+  }
+
+  if (val === '±') {
+    if (display !== '0') {
+      display = display.startsWith('-') ? display.slice(1) : '-' + display;
+      // Replace last number in expression
+      resEl.textContent = display;
+    }
+    return;
+  }
+
+  if (val === '%') {
+    if (display !== '0') {
+      const v = parseFloat(display) / 100;
+      display = formatNum(v);
+      resEl.textContent = display;
+    }
+    return;
+  }
+
+  // Operator
+  const ops = ['+', '−', '×', '÷', '^'];
+  if (ops.includes(val)) {
+    if (justCalced) { expression = display; justCalced = false; }
+    if (expression === '') expression = display;
+    // Replace trailing operator
+    const lastIsOp = ops.some(o => expression.endsWith(o));
+    if (lastIsOp) expression = expression.slice(0,-1);
+    expression += val;
+    exprEl.textContent = expression;
+    display = '0';
+    resEl.className = 'display-result';
+    resEl.style.fontSize = '56px';
+    resEl.textContent = '0';
+    return;
+  }
+
+  // Functions
+  const fns = ['sin(','cos(','tan(','log(','ln(','√('];
+  if (fns.includes(val)) {
+    if (justCalced) { expression = ''; justCalced = false; }
+    expression += val;
+    display = '0';
+    exprEl.textContent = expression;
+    resEl.textContent = display;
+    return;
+  }
+
+  // Constants
+  if (val === 'π') {
+    insertValue('3.14159265358979');
+    return;
+  }
+  if (val === 'e') {
+    insertValue('2.71828182845905');
+    return;
+  }
+
+  // Brackets
+  if (val === '(' || val === ')') {
+    expression += val;
+    exprEl.textContent = expression;
+    return;
+  }
+
+  // Number/decimal
+  if (justCalced) { display = '0'; expression = ''; justCalced = false; resEl.style.fontSize = '56px'; resEl.className = 'display-result'; }
+  if (val === '.') {
+    if (display.includes('.')) return;
+    display += '.';
+  } else {
+    display = display === '0' ? val : display + val;
+  }
+  expression += (expression === '' || ['+','−','×','÷','^','('].some(o => expression.endsWith(o))) ? '' : '';
+  // Update expression with current number
+  const opsAll = ['+','−','×','÷','^','('];
+  let lastOpIdx = -1;
+  for (let i = expression.length-1; i >= 0; i--) {
+    if (opsAll.includes(expression[i])) { lastOpIdx = i; break; }
+  }
+  const prefix = lastOpIdx >= 0 ? expression.slice(0, lastOpIdx+1) : '';
+  expression = prefix + display;
+  exprEl.textContent = expression || display;
+  resEl.style.fontSize = display.length > 9 ? '38px' : '56px';
+  resEl.textContent = display;
+}
+
+function insertValue(v) {
+  if (justCalced) { expression = v; display = v; justCalced = false; }
+  else { expression += v; display = v; }
+  document.getElementById('displayExpr').textContent = expression;
+  document.getElementById('displayResult').textContent = display;
+}
+
+// ══ EVALUATE ══
+function evaluate(expr) {
+  try {
+    let e = expr
+      .replace(/×/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/−/g, '-')
+      .replace(/\^/g, '**')
+      .replace(/√\(/g, 'Math.sqrt(')
+      .replace(/sin\(/g, isDeg ? '___sinD(' : 'Math.sin(')
+      .replace(/cos\(/g, isDeg ? '___cosD(' : 'Math.cos(')
+      .replace(/tan\(/g, isDeg ? '___tanD(' : 'Math.tan(')
+      .replace(/log\(/g, 'Math.log10(')
+      .replace(/ln\(/g, 'Math.log(')
+      .replace(/π/g, 'Math.PI')
+      .replace(/e(?![0-9])/g, 'Math.E');
+
+    // Inject degree helpers
+    const fn = new Function(
+      '___sinD','___cosD','___tanD',
+      `"use strict"; return (${e});`
+    );
+    const toRad = d => d * Math.PI / 180;
+    const result = fn(
+      d => Math.sin(toRad(d)),
+      d => Math.cos(toRad(d)),
+      d => Math.tan(toRad(d))
+    );
+
+    if (!isFinite(result)) return 'Error';
+    return formatNum(result);
+  } catch(e) {
+    return 'Error';
+  }
+}
+
+function formatNum(n) {
+  if (Number.isInteger(n)) return n.toString();
+  // Round to avoid floating point weirdness
+  const rounded = parseFloat(n.toPrecision(12));
+  // Remove trailing zeros
+  return rounded.toString();
+}
+
+// ══ DEG/RAD ══
+function toggleDeg() {
+  isDeg = !isDeg;
+  document.getElementById('degBtn').textContent = isDeg ? 'DEG' : 'RAD';
+  document.getElementById('degBtn').style.color = isDeg ? 'var(--accent2)' : 'var(--accent3)';
+}
+
+// ══ EXPRESSION MODE ══
+function evalExpr() {
+  const raw = document.getElementById('exprTextarea').value.trim();
+  const resultEl = document.getElementById('exprResult');
+  if (!raw) { resultEl.textContent = '—'; return; }
+
+  // Simple substitution: support x=N pattern
+  let expr = raw;
+  const match = raw.match(/where\s+([a-zA-Z])\s*=\s*(-?[\d.]+)/i);
+  if (match) {
+    const [,varName, varVal] = match;
+    expr = raw.replace(/where.*/i, '').trim();
+    expr = expr.replace(new RegExp(varName, 'g'), varVal);
+  }
+
+  const result = evaluate(expr);
+  resultEl.textContent = result === 'Error' ? '⚠ Check expression' : `= ${result}`;
+  resultEl.style.color = result === 'Error' ? 'var(--accent3)' : 'var(--accent2)';
+
+  if (result !== 'Error') {
+    saveHistory(raw, result);
+  }
+}
+
+function exprInsert(val) {
+  const ta = document.getElementById('exprTextarea');
+  const start = ta.selectionStart;
+  const before = ta.value.slice(0, start);
+  const after = ta.value.slice(ta.selectionEnd);
+  ta.value = before + val + after;
+  ta.selectionStart = ta.selectionEnd = start + val.length;
+  ta.focus();
+  evalExpr();
+}
+
+function exprClear() {
+  document.getElementById('exprTextarea').value = '';
+  document.getElementById('exprResult').textContent = '—';
+  document.getElementById('exprResult').style.color = 'var(--accent2)';
+}
+
+function exprBackspace() {
+  const ta = document.getElementById('exprTextarea');
+  const start = ta.selectionStart;
+  if (start > 0) {
+    ta.value = ta.value.slice(0, start-1) + ta.value.slice(start);
+    ta.selectionStart = ta.selectionEnd = start - 1;
+  }
+  evalExpr();
+}
+
+// ══ SEND TO AI ══
+function sendToAI(query) {
+  if (!query) return;
+  localStorage.setItem('protege_ai_query', query);
+  showToast('Opening Protege AI... 🤖', 'info');
+  setTimeout(() => window.location.href = 'dashboard.html?q=' + encodeURIComponent(query), 800);
+}
+
+function sendExprToAI() {
+  const raw = document.getElementById('exprTextarea').value.trim()
+    || (expression || display);
+  if (!raw || raw === '0') return showToast('Enter an expression first', 'info');
+  sendToAI(`Solve this step by step: ${raw}`);
+}
+
+// ══ HISTORY ══
+function saveHistory(expr, result) {
+  const item = { expr, result, time: Date.now() };
+  calcHistory.unshift(item);
+  if (calcHistory.length > 50) calcHistory.pop();
+  localStorage.setItem('protege_calc_history', JSON.stringify(calcHistory));
+  updateHistoryBadge();
+}
+
+function updateHistoryBadge() {
+  const badge = document.getElementById('historyBadge');
+  if (calcHistory.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = calcHistory.length > 9 ? '9+' : calcHistory.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openHistory() {
+  renderHistory();
+  document.getElementById('historyPanel').classList.add('open');
+  document.getElementById('historyOverlay').classList.add('open');
+}
+
+function closeHistory() {
+  document.getElementById('historyPanel').classList.remove('open');
+  document.getElementById('historyOverlay').classList.remove('open');
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (calcHistory.length === 0) {
+    list.innerHTML = '<div class="history-empty">No calculations yet 🧮</div>';
+    return;
+  }
+  list.innerHTML = calcHistory.map((item, i) => `
+    <div class="history-item" onclick="useHistory(${i})">
+      <div class="history-expr">${item.expr}</div>
+      <div class="history-res">= ${item.result}</div>
+    </div>
+  `).join('');
+}
+
+function useHistory(i) {
+  const item = calcHistory[i];
+  closeHistory();
+  if (currentMode === 'expr') {
+    document.getElementById('exprTextarea').value = item.expr;
+    evalExpr();
+  } else {
+    display = item.result;
+    expression = '';
+    justCalced = true;
+    const resEl = document.getElementById('displayResult');
+    resEl.className = 'display-result has-result';
+    resEl.style.fontSize = '56px';
+    resEl.textContent = item.result;
+    document.getElementById('displayExpr').textContent = item.expr + ' =';
+  }
+}
+
+function clearHistory() {
+  calcHistory = [];
+  localStorage.removeItem('protege_calc_history');
+  updateHistoryBadge();
+  renderHistory();
+}
+
+// ══ HANDLE AI QUERY FROM URL (coming back from dashboard) ══
+window.addEventListener('load', () => {
+  updateHistoryBadge();
+
+  // Auto-send query if dashboard redirected back with ?q=
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('q')) {
+    const q = params.get('q');
+    if (currentMode !== 'expr') switchMode('expr');
+    document.getElementById('exprTextarea').value = q;
+    evalExpr();
+  }
+});
+
+// ══ TOAST ══
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`;
+  t.innerHTML = msg;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
