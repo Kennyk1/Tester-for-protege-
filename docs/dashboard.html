@@ -916,7 +916,7 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
 }
-function goCalculator() { closeSidebar(); alert('Calculator coming soon!'); }
+function goCalculator() { closeSidebar(); window.location.href = 'calculator.html'; }
 function goReferral() { closeSidebar(); window.location.href = 'referral.html'; }
 function goSettings() { closeSidebar(); window.location.href = 'settings.html'; }
 function doLogout() {
