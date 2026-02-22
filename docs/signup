@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Protege – Sign Up</title>
+<style>
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --text: #f0f0f8;
+    --muted: #6b6b80;
+    --card: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.08);
+    --input-bg: rgba(255,255,255,0.04);
+    --error: #ff5e7e;
+    --success: #00d4aa;
+  }
+
+  html, body {
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Orbs */
+  .orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18; animation: drift 8s ease-in-out infinite alternate; }
+  .orb1 { width: 280px; height: 280px; background: var(--accent); top: -60px; right: -60px; }
+  .orb2 { width: 220px; height: 220px; background: var(--accent2); bottom: 100px; left: -60px; animation-delay: -4s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(15px,25px) scale(1.06); } }
+
+  /* Page */
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 48px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 52px 0 8px;
+    gap: 12px;
+  }
+  .back-btn {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .back-btn:active { background: rgba(255,255,255,0.1); }
+
+  .header-title {
+    font-family: 'Syne', -apple-system, sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Subtitle */
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  /* Form */
+  .form { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-right {
+    position: absolute;
+    right: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  input {
+    width: 100%;
+    padding: 16px 16px 16px 44px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.25s, background 0.25s;
+    -webkit-appearance: none;
+  }
+  input::placeholder { color: var(--muted); }
+  input:focus {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.06);
+  }
+  input.has-right { padding-right: 44px; }
+  input.error-field { border-color: var(--error); }
+  input.success-field { border-color: var(--success); }
+
+  /* Phone field with dial code */
+  .phone-wrap {
+    display: flex;
+    gap: 10px;
+  }
+
+  .dial-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.25s, background 0.25s;
+    min-width: 88px;
+    justify-content: space-between;
+  }
+  .dial-btn:focus, .dial-btn:active { border-color: var(--accent); outline: none; }
+
+  .phone-input-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+  .phone-input-wrap .input-icon { left: 14px; }
+  .phone-input { padding-left: 44px !important; }
+
+  /* Country dropdown */
+  .country-dropdown {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 48px);
+    max-height: 60vh;
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    z-index: 100;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .country-dropdown.open { display: flex; }
+
+  .dropdown-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 99;
+    backdrop-filter: blur(4px);
+  }
+  .dropdown-overlay.open { display: block; }
+
+  .dropdown-search-wrap {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .dropdown-search {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
+  .dropdown-search-icon { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); }
+
+  .country-list { overflow-y: auto; flex: 1; }
+  .country-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .country-item:active { background: rgba(108,99,255,0.1); }
+  .country-name { font-size: 14px; }
+  .country-code { font-size: 13px; color: var(--accent2); font-weight: 500; }
+
+  /* Referral toggle */
+  .referral-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    font-size: 14px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .referral-toggle:active { border-color: var(--accent); }
+
+  .referral-field { display: none; }
+  .referral-field.open { display: flex; flex-direction: column; gap: 8px; animation: fadeUp 0.3s ease; }
+
+  /* Message */
+  .msg {
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .msg.error { display: flex; background: rgba(255,94,126,0.1); color: var(--error); border: 1px solid rgba(255,94,126,0.2); }
+  .msg.success { display: flex; background: rgba(0,212,170,0.1); color: var(--success); border: 1px solid rgba(0,212,170,0.2); }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    margin: 4px 0;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    border: none;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #8b83ff);
+    color: white;
+    box-shadow: 0 8px 30px rgba(108,99,255,0.35);
+    margin-top: 8px;
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary:active { box-shadow: 0 4px 15px rgba(108,99,255,0.2); }
+
+  .login-link {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+  .login-link a { color: var(--accent2); text-decoration: none; font-weight: 500; }
+
+  /* Loader */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+</div>
+
+<!-- Country picker overlay -->
+<div class="dropdown-overlay" id="overlay" onclick="closeCountry()"></div>
+<div class="country-dropdown" id="countryDropdown">
+  <div class="dropdown-search-wrap">
+    <svg class="dropdown-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input class="dropdown-search" type="text" placeholder="Search country..." id="countrySearch" oninput="filterCountries(this.value)"/>
+  </div>
+  <div class="country-list" id="countryList"></div>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <a href="welcome.html" class="back-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div>
+      <div class="header-title">Create Account</div>
+    </div>
+  </div>
+
+  <p class="subtitle">Join Protege and start solving anything with your voice.</p>
+
+  <div id="msg" class="msg"></div>
+
+  <div class="form">
+
+    <!-- Full Name -->
+    <div class="field">
+      <label class="label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Full Name
+      </label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <input type="text" id="name" placeholder="e.g. John Doe" autocomplete="name"/>
+      </div>
+    </div>
+
+    <!-- Phone Number -->
+    <div class="field">
+      <label class="label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.76a16 16 0 0 0 8.33 8.33l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Phone Number
+      </label>
+      <div class="phone-wrap">
+        <button class="dial-btn" id="dialBtn" onclick="openCountry()">
+          <span id="dialFlag">🌍</span>
+          <span id="dialCode">+1</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="phone-input-wrap">
+          <span class="input-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.76a16 16 0 0 0 8.33 8.33l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </span>
+          <input class="phone-input" type="tel" id="phone" placeholder="000 000 0000" inputmode="numeric"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="field">
+      <label class="label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Password
+      </label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <input class="has-right" type="password" id="password" placeholder="Min. 8 characters"/>
+        <button class="input-right" onclick="togglePass('password', 'eyeIcon1')" type="button">
+          <svg id="eyeIcon1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="field">
+      <label class="label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Confirm Password
+      </label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </span>
+        <input class="has-right" type="password" id="confirm" placeholder="Re-enter password"/>
+        <button class="input-right" onclick="togglePass('confirm', 'eyeIcon2')" type="button">
+          <svg id="eyeIcon2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Referral toggle -->
+    <div class="divider">optional</div>
+
+    <div class="referral-toggle" onclick="toggleReferral()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#rg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6c63ff"/><stop offset="100%" stop-color="#00d4aa"/></linearGradient></defs>
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      <span id="refToggleText">Have a referral code? Tap to enter</span>
+      <svg id="refChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <div class="referral-field" id="referralField">
+      <label class="label">Referral Code</label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </span>
+        <input type="text" id="referral" placeholder="e.g. AB12CD" style="text-transform:uppercase"/>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn btn-primary" id="submitBtn" onclick="doSignup()">
+      <span id="btnText">Create Account</span>
+      <div class="spinner" id="spinner"></div>
+      <svg id="btnArrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <p class="login-link">Already have an account? <a href="login.html">Log in</a></p>
+
+  </div>
+</div>
+
+<script>
+// ── Country data ──
+const COUNTRIES = [
+  {name:"Afghanistan",code:"+93",flag:"🇦🇫"},{name:"Albania",code:"+355",flag:"🇦🇱"},{name:"Algeria",code:"+213",flag:"🇩🇿"},
+  {name:"Argentina",code:"+54",flag:"🇦🇷"},{name:"Australia",code:"+61",flag:"🇦🇺"},{name:"Austria",code:"+43",flag:"🇦🇹"},
+  {name:"Bangladesh",code:"+880",flag:"🇧🇩"},{name:"Belgium",code:"+32",flag:"🇧🇪"},{name:"Brazil",code:"+55",flag:"🇧🇷"},
+  {name:"Canada",code:"+1",flag:"🇨🇦"},{name:"Chile",code:"+56",flag:"🇨🇱"},{name:"China",code:"+86",flag:"🇨🇳"},
+  {name:"Colombia",code:"+57",flag:"🇨🇴"},{name:"Croatia",code:"+385",flag:"🇭🇷"},{name:"Czech Republic",code:"+420",flag:"🇨🇿"},
+  {name:"Denmark",code:"+45",flag:"🇩🇰"},{name:"Egypt",code:"+20",flag:"🇪🇬"},{name:"Ethiopia",code:"+251",flag:"🇪🇹"},
+  {name:"Finland",code:"+358",flag:"🇫🇮"},{name:"France",code:"+33",flag:"🇫🇷"},{name:"Germany",code:"+49",flag:"🇩🇪"},
+  {name:"Ghana",code:"+233",flag:"🇬🇭"},{name:"Greece",code:"+30",flag:"🇬🇷"},{name:"Hungary",code:"+36",flag:"🇭🇺"},
+  {name:"India",code:"+91",flag:"🇮🇳"},{name:"Indonesia",code:"+62",flag:"🇮🇩"},{name:"Iran",code:"+98",flag:"🇮🇷"},
+  {name:"Iraq",code:"+964",flag:"🇮🇶"},{name:"Ireland",code:"+353",flag:"🇮🇪"},{name:"Israel",code:"+972",flag:"🇮🇱"},
+  {name:"Italy",code:"+39",flag:"🇮🇹"},{name:"Jamaica",code:"+1876",flag:"🇯🇲"},{name:"Japan",code:"+81",flag:"🇯🇵"},
+  {name:"Jordan",code:"+962",flag:"🇯🇴"},{name:"Kenya",code:"+254",flag:"🇰🇪"},{name:"Kuwait",code:"+965",flag:"🇰🇼"},
+  {name:"Lebanon",code:"+961",flag:"🇱🇧"},{name:"Libya",code:"+218",flag:"🇱🇾"},{name:"Malaysia",code:"+60",flag:"🇲🇾"},
+  {name:"Mexico",code:"+52",flag:"🇲🇽"},{name:"Morocco",code:"+212",flag:"🇲🇦"},{name:"Netherlands",code:"+31",flag:"🇳🇱"},
+  {name:"New Zealand",code:"+64",flag:"🇳🇿"},{name:"Nigeria",code:"+234",flag:"🇳🇬"},{name:"Norway",code:"+47",flag:"🇳🇴"},
+  {name:"Pakistan",code:"+92",flag:"🇵🇰"},{name:"Peru",code:"+51",flag:"🇵🇪"},{name:"Philippines",code:"+63",flag:"🇵🇭"},
+  {name:"Poland",code:"+48",flag:"🇵🇱"},{name:"Portugal",code:"+351",flag:"🇵🇹"},{name:"Qatar",code:"+974",flag:"🇶🇦"},
+  {name:"Romania",code:"+40",flag:"🇷🇴"},{name:"Russia",code:"+7",flag:"🇷🇺"},{name:"Saudi Arabia",code:"+966",flag:"🇸🇦"},
+  {name:"Senegal",code:"+221",flag:"🇸🇳"},{name:"Singapore",code:"+65",flag:"🇸🇬"},{name:"South Africa",code:"+27",flag:"🇿🇦"},
+  {name:"South Korea",code:"+82",flag:"🇰🇷"},{name:"Spain",code:"+34",flag:"🇪🇸"},{name:"Sri Lanka",code:"+94",flag:"🇱🇰"},
+  {name:"Sudan",code:"+249",flag:"🇸🇩"},{name:"Sweden",code:"+46",flag:"🇸🇪"},{name:"Switzerland",code:"+41",flag:"🇨🇭"},
+  {name:"Syria",code:"+963",flag:"🇸🇾"},{name:"Tanzania",code:"+255",flag:"🇹🇿"},{name:"Thailand",code:"+66",flag:"🇹🇭"},
+  {name:"Tunisia",code:"+216",flag:"🇹🇳"},{name:"Turkey",code:"+90",flag:"🇹🇷"},{name:"UAE",code:"+971",flag:"🇦🇪"},
+  {name:"Uganda",code:"+256",flag:"🇺🇬"},{name:"Ukraine",code:"+380",flag:"🇺🇦"},{name:"United Kingdom",code:"+44",flag:"🇬🇧"},
+  {name:"United States",code:"+1",flag:"🇺🇸"},{name:"Venezuela",code:"+58",flag:"🇻🇪"},{name:"Vietnam",code:"+84",flag:"🇻🇳"},
+  {name:"Yemen",code:"+967",flag:"🇾🇪"},{name:"Zimbabwe",code:"+263",flag:"🇿🇼"}
+];
+
+let selectedDial = "+1";
+let filteredCountries = [...COUNTRIES];
+
+function renderCountries(list) {
+  const el = document.getElementById('countryList');
+  el.innerHTML = list.map(c => `
+    <div class="country-item" onclick="selectCountry('${c.code}','${c.flag}')">
+      <span class="country-name">${c.flag} ${c.name}</span>
+      <span class="country-code">${c.code}</span>
+    </div>
+  `).join('');
+}
+
+function openCountry() {
+  renderCountries(COUNTRIES);
+  document.getElementById('countryDropdown').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('countrySearch').focus(), 100);
+}
+
+function closeCountry() {
+  document.getElementById('countryDropdown').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('countrySearch').value = '';
+}
+
+function selectCountry(code, flag) {
+  selectedDial = code;
+  document.getElementById('dialFlag').textContent = flag;
+  document.getElementById('dialCode').textContent = code;
+  closeCountry();
+}
+
+function filterCountries(q) {
+  const filtered = COUNTRIES.filter(c =>
+    c.name.toLowerCase().includes(q.toLowerCase()) || c.code.includes(q)
+  );
+  renderCountries(filtered);
+}
+
+// ── Toggle password visibility ──
+function togglePass(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  icon.innerHTML = isHidden
+    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`
+    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+}
+
+// ── Toggle referral ──
+let refOpen = false;
+function toggleReferral() {
+  refOpen = !refOpen;
+  document.getElementById('referralField').classList.toggle('open', refOpen);
+  document.getElementById('refToggleText').textContent = refOpen ? 'Remove referral code' : 'Have a referral code? Tap to enter';
+  document.getElementById('refChevron').style.transform = refOpen ? 'rotate(180deg)' : '';
+}
+
+// ── Show message ──
+function showMsg(type, text) {
+  const el = document.getElementById('msg');
+  el.className = `msg ${type}`;
+  el.innerHTML = type === 'error'
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${text}`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>${text}`;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Get device ID ──
+function getDeviceId() {
+  let id = localStorage.getItem('protege_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).substr(2,12) + Date.now().toString(36);
+    localStorage.setItem('protege_device_id', id);
+  }
+  return id;
+}
+
+// ── Signup ──
+async function doSignup() {
+  const name = document.getElementById('name').value.trim();
+  const phone = selectedDial + document.getElementById('phone').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm').value;
+  const referral = document.getElementById('referral').value.trim().toUpperCase();
+
+  // Validate
+  if (!name) return showMsg('error', 'Please enter your full name');
+  if (document.getElementById('phone').value.trim().length < 6) return showMsg('error', 'Enter a valid phone number');
+  if (password.length < 8) return showMsg('error', 'Password must be at least 8 characters');
+  if (password !== confirm) return showMsg('error', 'Passwords do not match');
+
+  // Loading state
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('btnText').textContent = 'Creating account...';
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('btnArrow').style.display = 'none';
+
+  try {
+    const res = await fetch('https://YOUR_BACKEND_URL/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        phone,
+        password,
+        referral: referral || undefined,
+        device_id: getDeviceId()
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      localStorage.setItem('protege_token', data.token);
+      showMsg('success', data.bonus_applied ? '🎉 Account created + bonus applied!' : 'Account created successfully!');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+    } else {
+      showMsg('error', data.message || 'Signup failed. Please try again.');
+      resetBtn();
+    }
+  } catch (e) {
+    showMsg('error', 'Connection error. Check your internet and try again.');
+    resetBtn();
+  }
+}
+
+function resetBtn() {
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('btnText').textContent = 'Create Account';
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('btnArrow').style.display = 'block';
+}
+</script>
+</body>
+</html>
