@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Protege – Wallet</title>
+<style>
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg:#0a0a0f; --surface:#13131a; --accent:#6c63ff; --accent2:#00d4aa;
+    --text:#f0f0f8; --muted:#6b6b80; --border:rgba(255,255,255,0.08);
+    --card:rgba(255,255,255,0.04); --error:#ff5e7e; --gold:#f7c948;
+  }
+  html,body { min-height:100%; width:100%; overflow-x:hidden; overflow-y:auto; background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-system,sans-serif; -webkit-font-smoothing:antialiased; }
+
+  .orbs { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.12; animation:drift 8s ease-in-out infinite alternate; }
+  .orb1 { width:280px; height:280px; background:var(--accent); top:-80px; left:-60px; }
+  .orb2 { width:200px; height:200px; background:var(--accent2); bottom:100px; right:-50px; animation-delay:-4s; }
+  @keyframes drift { from{transform:translate(0,0)} to{transform:translate(15px,25px)} }
+
+  .page { position:relative; z-index:1; display:flex; flex-direction:column; padding:0 20px 60px; opacity:0; animation:fadeUp 0.5s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .header { display:flex; align-items:center; padding:52px 0 24px; gap:12px; }
+  .back-btn { width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; transition:background 0.2s; flex-shrink:0; }
+  .back-btn:active { background:rgba(255,255,255,0.1); }
+  .header-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.02em; }
+
+  /* ── Balance card with currency toggle ── */
+  .balance-card { background:linear-gradient(135deg,#1a1060 0%,#0d1a2e 50%,#0a2a1a 100%); border:1px solid rgba(0,212,170,0.2); border-radius:24px; padding:22px 22px 18px; margin-bottom:20px; position:relative; overflow:hidden; }
+  .balance-card::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; background:radial-gradient(circle,rgba(0,212,170,0.15),transparent 70%); pointer-events:none; }
+  .bal-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+  .bal-label { font-size:11px; color:rgba(0,212,170,0.7); text-transform:uppercase; letter-spacing:0.08em; font-weight:500; }
+  .currency-toggle { display:flex; background:rgba(255,255,255,0.08); border-radius:20px; padding:3px; gap:2px; }
+  .ct-btn { padding:4px 10px; border-radius:16px; font-size:11px; font-weight:700; cursor:pointer; transition:all 0.2s; color:var(--muted); }
+  .ct-btn.active { background:var(--accent2); color:white; }
+  .bal-amount { font-family:'Syne',sans-serif; font-size:42px; font-weight:800; letter-spacing:-0.03em; color:white; line-height:1; margin-bottom:4px; cursor:pointer; transition:opacity 0.2s; }
+  .bal-amount:active { opacity:0.7; }
+  .bal-sub { font-size:12px; color:var(--muted); }
+
+  /* Actions */
+  .action-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:28px; }
+  .action-btn { padding:14px 6px; border-radius:16px; border:1px solid var(--border); background:var(--card); display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; transition:border-color 0.2s,transform 0.15s; text-decoration:none; }
+  .action-btn:active { transform:scale(0.95); border-color:var(--accent); }
+  .action-btn.active-tab { border-color:var(--accent); background:rgba(108,99,255,0.08); }
+  .action-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .action-label { font-size:11px; font-weight:600; color:var(--muted); }
+  .action-btn.active-tab .action-label { color:var(--text); }
+
+  /* Section */
+  .section-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:14px; }
+
+  /* Method cards */
+  .method-list { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .method-card { display:flex; align-items:center; gap:14px; padding:16px; background:var(--card); border:1.5px solid var(--border); border-radius:16px; cursor:pointer; transition:all 0.2s; }
+  .method-card.selected { border-color:var(--accent); background:rgba(108,99,255,0.07); }
+  .method-card:active { transform:scale(0.98); }
+  .method-logo { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .method-name { font-size:14px; font-weight:600; }
+  .method-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+  .method-radio { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+  .method-card.selected .method-radio { border-color:var(--accent); background:var(--accent); }
+  .method-radio-dot { width:8px; height:8px; border-radius:50%; background:white; opacity:0; transition:opacity 0.2s; }
+  .method-card.selected .method-radio-dot { opacity:1; }
+  .fee-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:6px; background:rgba(255,94,126,0.12); color:var(--error); border:1px solid rgba(255,94,126,0.2); margin-left:4px; }
+  .coming-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:6px; background:rgba(247,201,72,0.1); color:var(--gold); border:1px solid rgba(247,201,72,0.2); }
+
+  /* Fund wallet coming soon */
+  .fund-section { background:rgba(108,99,255,0.05); border:1px solid rgba(108,99,255,0.15); border-radius:20px; padding:18px; margin-bottom:20px; }
+  .fund-title { font-size:13px; font-weight:700; color:var(--accent); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+  .fund-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .fund-item:last-child { border-bottom:none; padding-bottom:0; }
+  .fund-item-icon { width:34px; height:34px; border-radius:10px; background:var(--card); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .fund-item-text { flex:1; font-size:13px; font-weight:500; }
+
+  /* Form */
+  .form-field { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .form-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:500; }
+  .form-input-wrap { position:relative; display:flex; align-items:center; }
+  .form-input-icon { position:absolute; left:14px; pointer-events:none; display:flex; }
+  .form-input { width:100%; padding:16px 16px 16px 44px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; color:var(--text); font-family:inherit; font-size:15px; outline:none; transition:border-color 0.25s; -webkit-appearance:none; }
+  .form-input::placeholder { color:var(--muted); }
+  .form-input:focus { border-color:var(--accent); background:rgba(108,99,255,0.05); }
+  .form-input.no-icon { padding-left:16px; }
+
+  .warn-box { background:rgba(247,201,72,0.07); border:1px solid rgba(247,201,72,0.2); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; color:var(--gold); line-height:1.6; display:flex; gap:8px; align-items:flex-start; }
+  .info-box { background:rgba(108,99,255,0.07); border:1px solid rgba(108,99,255,0.2); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; color:#a09aff; line-height:1.6; display:flex; gap:8px; align-items:flex-start; }
+
+  /* ── OPay-style confirm sheet ── */
+  .confirm-sheet { display:none; }
+  .confirm-sheet.active { display:block; }
+  .confirm-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; margin-bottom:16px; }
+  .confirm-header { padding:20px; border-bottom:1px solid var(--border); text-align:center; }
+  .confirm-amount { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.02em; margin-bottom:4px; }
+  .confirm-method-label { font-size:13px; color:var(--muted); }
+  .confirm-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .confirm-row:last-child { border-bottom:none; }
+  .confirm-row-label { font-size:13px; color:var(--muted); }
+  .confirm-row-val { font-size:13px; font-weight:600; text-align:right; max-width:60%; word-break:break-all; }
+  .confirm-row-val.green { color:var(--accent2); }
+  .confirm-row-val.red { color:var(--error); }
+
+  /* ── PIN ── */
+  .pin-section { display:none; }
+  .pin-section.active { display:block; }
+  .pin-header { text-align:center; margin-bottom:20px; }
+  .pin-header-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:6px; }
+  .pin-header-sub { font-size:13px; color:var(--muted); }
+
+  .pin-dots { display:flex; justify-content:center; gap:16px; margin:16px 0 28px; }
+  .pin-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--border); background:transparent; transition:all 0.2s cubic-bezier(0.34,1.4,0.64,1); }
+  .pin-dot.filled { background:var(--accent); border-color:var(--accent); transform:scale(1.15); box-shadow:0 0 12px rgba(108,99,255,0.5); }
+  .pin-dot.error-dot { background:var(--error); border-color:var(--error); animation:shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+
+  .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:300px; margin:0 auto; }
+  .num-key { height:64px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:background 0.15s,transform 0.1s; user-select:none; }
+  .num-key:active { background:rgba(108,99,255,0.15); border-color:rgba(108,99,255,0.3); transform:scale(0.94); }
+  .num-key.empty { background:transparent; border-color:transparent; cursor:default; }
+  .num-key.empty:active { background:transparent; transform:none; }
+  .num-digit { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; line-height:1; }
+  .num-letters { font-size:9px; color:var(--muted); letter-spacing:0.1em; margin-top:2px; }
+
+  /* Buttons */
+  .btn { width:100%; padding:17px; border-radius:14px; border:none; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:transform 0.15s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:linear-gradient(135deg,var(--accent),#8b83ff); color:white; box-shadow:0 6px 24px rgba(108,99,255,0.3); }
+  .btn-pay { background:linear-gradient(135deg,#00b894,var(--accent2)); color:white; box-shadow:0 6px 24px rgba(0,212,170,0.3); font-size:17px; }
+  .btn-ghost { background:var(--card); border:1px solid var(--border); color:var(--muted); margin-top:10px; }
+  .msg-box { font-size:13px; padding:11px 14px; border-radius:10px; display:none; align-items:center; gap:8px; margin-bottom:14px; }
+  .msg-box.error { display:flex; background:rgba(255,94,126,0.1); color:var(--error); border:1px solid rgba(255,94,126,0.2); }
+
+  /* ── SUCCESS SCREEN ── */
+  .success-screen { display:none; position:fixed; inset:0; background:var(--bg); z-index:300; flex-direction:column; align-items:center; padding:0; overflow-y:auto; }
+  .success-screen.show { display:flex; animation:fadeUp 0.4s ease; }
+  #confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:301; }
+
+  .success-done-btn { position:fixed; top:52px; right:20px; font-size:15px; font-weight:700; color:var(--accent2); background:none; border:none; cursor:pointer; z-index:302; }
+
+  .success-inner { width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; padding:80px 24px 48px; }
+
+  .success-tick { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#00b894,var(--accent2)); display:flex; align-items:center; justify-content:center; margin-bottom:16px; box-shadow:0 0 40px rgba(0,212,170,0.4); animation:popIn 0.5s cubic-bezier(0.34,1.5,0.64,1); }
+  @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .success-tick svg path { stroke-dasharray:50; stroke-dashoffset:0; }
+
+  .success-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:6px; }
+  .success-amount { font-family:'Syne',sans-serif; font-size:44px; font-weight:800; color:var(--accent2); letter-spacing:-0.03em; margin-bottom:20px; }
+
+  /* OPay-style 3 action icons */
+  .success-actions-row { display:flex; gap:12px; margin-bottom:28px; width:100%; }
+  .success-action { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 8px; background:var(--surface); border:1px solid var(--border); border-radius:18px; cursor:pointer; transition:transform 0.15s; }
+  .success-action:active { transform:scale(0.95); border-color:var(--accent2); }
+  .success-action-icon { width:44px; height:44px; border-radius:14px; background:rgba(0,212,170,0.1); display:flex; align-items:center; justify-content:center; }
+  .success-action-label { font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
+
+  /* Transaction details card */
+  .success-detail-card { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; margin-bottom:16px; }
+  .success-detail-title { font-size:13px; font-weight:700; color:var(--muted); padding:14px 18px; border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:0.06em; }
+  .success-detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:13px 18px; border-bottom:1px solid var(--border); }
+  .success-detail-row:last-child { border-bottom:none; }
+  .success-detail-label { font-size:13px; color:var(--muted); flex-shrink:0; }
+  .success-detail-val { font-size:13px; font-weight:600; text-align:right; word-break:break-all; max-width:60%; }
+  .success-detail-val.green { color:var(--accent2); }
+  .success-detail-val.gold { color:var(--gold); }
+
+  /* More actions row */
+  .more-actions { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 0; margin-bottom:20px; }
+  .more-action-row { display:flex; align-items:center; gap:10px; padding:14px 18px; cursor:pointer; transition:background 0.15s; }
+  .more-action-row:active { background:rgba(255,255,255,0.04); }
+  .more-action-row+.more-action-row { border-top:1px solid var(--border); }
+  .more-action-label { font-size:14px; font-weight:600; color:var(--accent2); }
+
+  /* ── RECEIVE MODAL ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; display:none; align-items:flex-end; backdrop-filter:blur(6px); }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet { width:100%; background:#111118; border-radius:28px 28px 0 0; border:1px solid var(--border); border-bottom:none; padding:0 24px 48px; animation:slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1); }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 24px; }
+  .modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; text-align:center; margin-bottom:6px; }
+  .modal-sub { font-size:13px; color:var(--muted); text-align:center; margin-bottom:24px; }
+  .receive-number { display:flex; align-items:center; justify-content:space-between; background:rgba(0,212,170,0.06); border:1px solid rgba(0,212,170,0.2); border-radius:16px; padding:18px 20px; margin-bottom:16px; }
+  .receive-num-text { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:0.05em; }
+  .copy-btn { display:flex; align-items:center; gap:6px; padding:9px 16px; background:var(--accent2); border:none; border-radius:10px; color:white; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:transform 0.15s; }
+  .copy-btn:active { transform:scale(0.95); }
+  .copy-btn.copied { background:var(--accent); }
+  .receive-share-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:8px; }
+  .receive-share-btn { padding:14px 8px; background:var(--card); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; font-size:11px; color:var(--muted); font-weight:500; transition:transform 0.15s; }
+  .receive-share-btn:active { transform:scale(0.94); }
+  .receive-share-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:#1e1e2e; border:1px solid var(--border); border-radius:12px; padding:12px 20px; font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; z-index:999; transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1); white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:rgba(0,212,170,0.3); color:var(--accent2); }
+  .toast.error { border-color:rgba(255,94,126,0.3); color:var(--error); }
+  .toast.info { border-color:rgba(108,99,255,0.3); color:var(--accent); }
+</style>
+</head>
+<body>
+<canvas id="confettiCanvas"></canvas>
+<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ── RECEIVE MODAL ── -->
+<div class="modal-overlay" id="receiveModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Receive Money</div>
+    <p class="modal-sub">Share your Protege phone number to receive transfers</p>
+    <div class="receive-number">
+      <div class="receive-num-text" id="receiveNum">Loading...</div>
+      <button class="copy-btn" id="copyNumBtn" onclick="copyNumber()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="receive-share-row">
+      <div class="receive-share-btn" onclick="shareReceive('wa')">
+        <div class="receive-share-icon" style="background:rgba(37,211,102,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.847L.057 23.882l6.195-1.624A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.373l-.358-.214-3.724.976.994-3.62-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg></div>
+        WhatsApp
+      </div>
+      <div class="receive-share-btn" onclick="shareReceive('tg')">
+        <div class="receive-share-icon" style="background:rgba(41,169,235,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#29A9EB"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.894-.904c-.63-.197-.643-.63.132-.93l11.286-4.354c.526-.19.986.13.81.462z"/></svg></div>
+        Telegram
+      </div>
+      <div class="receive-share-btn" onclick="shareReceive('sms')">
+        <div class="receive-share-icon" style="background:rgba(0,212,170,0.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        Messages
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal('receiveModal')" style="margin-top:8px;">Close</button>
+  </div>
+</div>
+
+<!-- ── SUCCESS SCREEN ── -->
+<div class="success-screen" id="successScreen">
+  <button class="success-done-btn" onclick="resetPage()">Done</button>
+  <div class="success-inner">
+    <div class="success-tick">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <div class="success-title">Withdrawal Submitted!</div>
+    <div class="success-amount" id="successAmtDisplay">$0.00</div>
+
+    <!-- OPay-style 3 action buttons -->
+    <div class="success-actions-row">
+      <div class="success-action" onclick="shareReceipt()">
+        <div class="success-action-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </div>
+        <div class="success-action-label">Share Receipt</div>
+      </div>
+      <div class="success-action" onclick="showViewDetails()">
+        <div class="success-action-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="success-action-label">View Details</div>
+      </div>
+      <div class="success-action" onclick="window.location.href='history.html'">
+        <div class="success-action-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/></svg>
+        </div>
+        <div class="success-action-label">History</div>
+      </div>
+    </div>
+
+    <!-- Transaction details (hidden until View Details clicked) -->
+    <div id="detailsCard" style="display:none;width:100%">
+      <div class="success-detail-card">
+        <div class="success-detail-title">Transaction Details</div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Recipient Details</span>
+          <span class="success-detail-val" id="sd_recipient">—</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Amount Sent</span>
+          <span class="success-detail-val green" id="sd_amount">—</span>
+        </div>
+        <div class="success-detail-row" id="sd_fee_row">
+          <span class="success-detail-label">Service Fee (20%)</span>
+          <span class="success-detail-val red" id="sd_fee">—</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Payment Method</span>
+          <span class="success-detail-val" id="sd_method">—</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Status</span>
+          <span class="success-detail-val gold">⏳ Pending</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Transaction No.</span>
+          <span class="success-detail-val" id="sd_ref" style="font-size:11px;color:var(--muted)">—</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="success-detail-label">Transaction Date</span>
+          <span class="success-detail-val" id="sd_date">—</span>
+        </div>
+      </div>
+
+      <div class="more-actions">
+        <div class="more-action-row" onclick="shareReceipt()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/></svg>
+          <span class="more-action-label">Share Receipt</span>
+        </div>
+        <div class="more-action-row" onclick="window.location.href='history.html'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/></svg>
+          <span class="more-action-label">View Records</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN PAGE ── -->
+<div class="page" id="mainPage">
+  <div class="header">
+    <a href="dashboard.html" class="back-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <div class="header-title">Wallet</div>
+  </div>
+
+  <!-- Balance -->
+  <div class="balance-card">
+    <div class="bal-top">
+      <div class="bal-label">Available Balance</div>
+      <div class="currency-toggle">
+        <div class="ct-btn active" id="ctUSD" onclick="setCurrency('usd')">USD</div>
+        <div class="ct-btn" id="ctNGN" onclick="setCurrency('ngn')">NGN</div>
+      </div>
+    </div>
+    <div class="bal-amount" id="balDisplay" onclick="toggleCurrency()">$0.00</div>
+    <div class="bal-sub" id="balSub">Tap to convert</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-row">
+    <div class="action-btn active-tab">
+      <div class="action-icon" style="background:rgba(247,201,72,0.1)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="action-label">Withdraw</div>
+    </div>
+    <a href="transfer.html" class="action-btn">
+      <div class="action-icon" style="background:rgba(108,99,255,0.1)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="action-label">Transfer</div>
+    </a>
+    <div class="action-btn" onclick="openModal('receiveModal')">
+      <div class="action-icon" style="background:rgba(0,212,170,0.1)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </div>
+      <div class="action-label">Receive</div>
+    </div>
+    <a href="history.html" class="action-btn">
+      <div class="action-icon" style="background:rgba(255,255,255,0.06)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/></svg>
+      </div>
+      <div class="action-label">History</div>
+    </a>
+  </div>
+
+  <!-- ═══ STEP 1: Choose method ═══ -->
+  <div id="step1">
+    <div class="section-title">Choose Withdrawal Method</div>
+    <div class="method-list">
+      <div class="method-card selected" id="mc_usdt_bep20" onclick="selectMethod('usdt_bep20')">
+        <div class="method-logo" style="background:rgba(240,185,11,0.12)"><svg width="26" height="26" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F0B90B"/><text x="16" y="21" text-anchor="middle" font-size="10" font-weight="bold" fill="white">BNB</text></svg></div>
+        <div class="method-info"><div class="method-name">USDT BEP-20</div><div class="method-desc">Binance Smart Chain · No fee</div></div>
+        <div class="method-radio"><div class="method-radio-dot"></div></div>
+      </div>
+      <div class="method-card" id="mc_usdt_trc20" onclick="selectMethod('usdt_trc20')">
+        <div class="method-logo" style="background:rgba(235,0,0,0.1)"><svg width="26" height="26" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#EB0000"/><text x="16" y="21" text-anchor="middle" font-size="10" font-weight="bold" fill="white">TRX</text></svg></div>
+        <div class="method-info"><div class="method-name">USDT TRC-20</div><div class="method-desc">Tron Network · No fee</div></div>
+        <div class="method-radio"><div class="method-radio-dot"></div></div>
+      </div>
+      <div class="method-card" id="mc_paypal" onclick="selectMethod('paypal')">
+        <div class="method-logo" style="background:rgba(0,48,135,0.15)"><svg width="22" height="22" viewBox="0 0 24 24" fill="#003087"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg></div>
+        <div class="method-info"><div class="method-name">PayPal</div><div class="method-desc">PayPal email · No fee</div></div>
+        <div class="method-radio"><div class="method-radio-dot"></div></div>
+      </div>
+      <div class="method-card" id="mc_ngn_opay" onclick="selectMethod('ngn_opay')">
+        <div class="method-logo" style="background:rgba(0,150,80,0.12)"><span style="font-size:11px;font-weight:800;color:#009650">OPay</span></div>
+        <div class="method-info"><div class="method-name">OPay <span style="color:var(--accent2)">₦</span><span class="fee-badge">20% fee</span></div><div class="method-desc">Nigerian Naira · OPay number</div></div>
+        <div class="method-radio"><div class="method-radio-dot"></div></div>
+      </div>
+      <div class="method-card" id="mc_ngn_palmpay" onclick="selectMethod('ngn_palmpay')">
+        <div class="method-logo" style="background:rgba(255,100,0,0.1)"><span style="font-size:9px;font-weight:800;color:#ff6400;text-align:center;line-height:1.2">PALM<br/>PAY</span></div>
+        <div class="method-info"><div class="method-name">PalmPay <span style="color:var(--accent2)">₦</span><span class="fee-badge">20% fee</span></div><div class="method-desc">Nigerian Naira · PalmPay number</div></div>
+        <div class="method-radio"><div class="method-radio-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- Fund wallet coming soon -->
+    <div class="fund-section">
+      <div class="fund-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Fund Wallet <span class="coming-badge">Coming Soon</span>
+      </div>
+      <div class="fund-item">
+        <div class="fund-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="fund-item-text">Bank Transfer</div>
+        <span class="coming-badge">Soon</span>
+      </div>
+      <div class="fund-item">
+        <div class="fund-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <div class="fund-item-text">Card Payment</div>
+        <span class="coming-badge">Soon</span>
+      </div>
+      <div class="fund-item">
+        <div class="fund-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+        <div class="fund-item-text">Crypto Deposit</div>
+        <span class="coming-badge">Soon</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="goToStep2()">Continue →</button>
+  </div>
+
+  <!-- ═══ STEP 2: Fill details ═══ -->
+  <div id="step2" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer;" onclick="goToStep1()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span style="font-size:14px;color:var(--muted)">Change method</span>
+    </div>
+
+    <div class="section-title" id="step2Title">Withdrawal Details</div>
+
+    <div class="warn-box" id="warnBox">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="warnText">Minimum $1.00. Processed within 24 hours. Double-check your address — transactions cannot be reversed.</span>
+    </div>
+
+    <!-- NGN fee notice -->
+    <div class="info-box" id="ngnFeeBox" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Please note: Transfers to Nigerian accounts may take <strong>3–5 business days</strong> due to Nigerian service changes and international processing from our US servers. A <strong>20% service fee</strong> will be deducted from your withdrawal amount.</span>
+    </div>
+
+    <div class="form-field" id="fieldAccName" style="display:none">
+      <div class="form-label">Account Name</div>
+      <div class="form-input-wrap">
+        <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <input class="form-input" type="text" id="inputAccName" placeholder="Your OPay/PalmPay account name"/>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <div class="form-label" id="addressLabel">Wallet Address</div>
+      <div class="form-input-wrap">
+        <span class="form-input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+        <input class="form-input" type="text" id="inputAddress" placeholder="Enter address"/>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <div class="form-label" id="amtLabel">Amount</div>
+      <div class="form-input-wrap">
+        <span class="form-input-icon" id="amtPrefix" style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--muted);left:14px">$</span>
+        <input class="form-input" type="number" id="inputAmount" placeholder="0.00" step="0.01" min="0.01" oninput="updateFeePreview()"/>
+      </div>
+    </div>
+
+    <!-- Fee preview for NGN -->
+    <div id="feePreview" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--muted)">Amount</span><span id="fp_amount" style="font-weight:600">—</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--muted)">Service fee (20%)</span><span id="fp_fee" style="color:var(--error);font-weight:600">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;border-top:1px solid var(--border);padding-top:8px;"><span style="font-weight:700">You receive</span><span id="fp_net" style="color:var(--accent2);font-weight:800">—</span></div>
+    </div>
+
+    <div class="msg-box" id="wMsg"></div>
+    <button class="btn btn-primary" onclick="goToConfirm()">Continue →</button>
+    <button class="btn btn-ghost" onclick="goToStep1()">Back</button>
+  </div>
+
+  <!-- ═══ STEP 3: OPay-style confirm ═══ -->
+  <div class="confirm-sheet" id="step3">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer;" onclick="goToStep2Back()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span style="font-size:14px;color:var(--muted)">Edit details</span>
+    </div>
+    <div class="confirm-card">
+      <div class="confirm-header">
+        <div class="confirm-amount" id="confirmAmtDisplay">$0.00</div>
+        <div class="confirm-method-label" id="confirmMethodLabel">via —</div>
+      </div>
+      <div class="confirm-row"><span class="confirm-row-label" id="confirmAddrLabel">Address</span><span class="confirm-row-val" id="confirmAddrVal">—</span></div>
+      <div class="confirm-row" id="confirmNameRow" style="display:none"><span class="confirm-row-label">Account Name</span><span class="confirm-row-val" id="confirmNameVal">—</span></div>
+      <div class="confirm-row" id="confirmFeeRow" style="display:none"><span class="confirm-row-label">Service Fee (20%)</span><span class="confirm-row-val red" id="confirmFeeVal">—</span></div>
+      <div class="confirm-row" id="confirmNetRow" style="display:none"><span class="confirm-row-label">You Receive</span><span class="confirm-row-val green" id="confirmNetVal">—</span></div>
+      <div class="confirm-row"><span class="confirm-row-label">Payment Method</span><span class="confirm-row-val" id="confirmPayMethod">—</span></div>
+      <div class="confirm-row"><span class="confirm-row-label">Available Balance</span><span class="confirm-row-val green" id="confirmBal">—</span></div>
+    </div>
+    <button class="btn btn-pay" onclick="goToPin()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Pay
+    </button>
+    <button class="btn btn-ghost" onclick="goToStep2Back()">Cancel</button>
+  </div>
+
+  <!-- ═══ STEP 4: PIN ═══ -->
+  <div class="pin-section" id="step4">
+    <div class="pin-header">
+      <div class="pin-header-title">Enter Withdrawal PIN</div>
+      <div class="pin-header-sub">Confirm your identity to complete</div>
+    </div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="numpad">
+      <div class="num-key" onclick="pinKey('1')"><div class="num-digit">1</div></div>
+      <div class="num-key" onclick="pinKey('2')"><div class="num-digit">2</div><div class="num-letters">ABC</div></div>
+      <div class="num-key" onclick="pinKey('3')"><div class="num-digit">3</div><div class="num-letters">DEF</div></div>
+      <div class="num-key" onclick="pinKey('4')"><div class="num-digit">4</div><div class="num-letters">GHI</div></div>
+      <div class="num-key" onclick="pinKey('5')"><div class="num-digit">5</div><div class="num-letters">JKL</div></div>
+      <div class="num-key" onclick="pinKey('6')"><div class="num-digit">6</div><div class="num-letters">MNO</div></div>
+      <div class="num-key" onclick="pinKey('7')"><div class="num-digit">7</div><div class="num-letters">PQRS</div></div>
+      <div class="num-key" onclick="pinKey('8')"><div class="num-digit">8</div><div class="num-letters">TUV</div></div>
+      <div class="num-key" onclick="pinKey('9')"><div class="num-digit">9</div><div class="num-letters">WXYZ</div></div>
+      <div class="num-key empty"></div>
+      <div class="num-key" onclick="pinKey('0')"><div class="num-digit">0</div></div>
+      <div class="num-key" onclick="pinDel()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="13" y2="14"/><line x1="13" y1="9" x2="18" y2="14"/></svg></div>
+    </div>
+    <button class="btn btn-ghost" style="max-width:300px;margin:16px auto 0;display:flex;" onclick="goToConfirmBack()">← Back</button>
+  </div>
+</div>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+let userPhone = '', userBalance = 0, usdToNgn = 1600;
+let displayCurrency = 'usd';
+let selectedMethod = 'usdt_bep20';
+let pinVal = '';
+let successData = {};
+
+const methodLabels = {
+  usdt_bep20:'USDT (BEP-20)', usdt_trc20:'USDT (TRC-20)',
+  paypal:'PayPal', ngn_opay:'OPay Wallet', ngn_palmpay:'PalmPay Wallet'
+};
+const addressLabels = {
+  usdt_bep20:'BEP-20 Wallet Address', usdt_trc20:'TRC-20 Wallet Address',
+  paypal:'PayPal Email Address', ngn_opay:'OPay Phone Number', ngn_palmpay:'PalmPay Phone Number'
+};
+const addressPlaceholders = {
+  usdt_bep20:'0x... BEP-20 address', usdt_trc20:'T... TRC-20 address',
+  paypal:'your@paypal.com', ngn_opay:'e.g. 08012345678', ngn_palmpay:'e.g. 08012345678'
+};
+
+async function loadUser() {
+  const token = localStorage.getItem('protege_token');
+  if (!token) { window.location.href = 'login.html'; return; }
+  try {
+    const [meRes, rateRes] = await Promise.all([
+      fetch(`${API}/api/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${API}/api/rate`)
+    ]);
+    const meData = await meRes.json();
+    if (!meData.success) { window.location.href = 'login.html'; return; }
+    userPhone = meData.user.phone;
+    userBalance = parseFloat(meData.user.balance);
+    const rateData = await rateRes.json();
+    if (rateData.success) usdToNgn = rateData.usd_to_ngn;
+    updateBalDisplay();
+    document.getElementById('receiveNum').textContent = userPhone;
+  } catch(e) { console.error(e); }
+}
+
+// ── Currency toggle ──
+function setCurrency(c) {
+  displayCurrency = c;
+  document.getElementById('ctUSD').classList.toggle('active', c === 'usd');
+  document.getElementById('ctNGN').classList.toggle('active', c === 'ngn');
+  updateBalDisplay();
+  updateFeePreview();
+}
+function toggleCurrency() {
+  setCurrency(displayCurrency === 'usd' ? 'ngn' : 'usd');
+}
+function updateBalDisplay() {
+  const el = document.getElementById('balDisplay');
+  const sub = document.getElementById('balSub');
+  if (displayCurrency === 'ngn') {
+    el.textContent = `₦${(userBalance * usdToNgn).toLocaleString('en-NG', {maximumFractionDigits:0})}`;
+    sub.textContent = `≈ $${userBalance.toFixed(2)} USD · Rate: ₦${usdToNgn.toLocaleString()}/USD`;
+  } else {
+    el.textContent = `$${userBalance.toFixed(2)}`;
+    sub.textContent = `≈ ₦${(userBalance * usdToNgn).toLocaleString('en-NG', {maximumFractionDigits:0})} NGN`;
+  }
+}
+
+// ── Method selection ──
+function selectMethod(m) {
+  selectedMethod = m;
+  document.querySelectorAll('.method-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`mc_${m}`).classList.add('selected');
+}
+
+function goToStep1() {
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('step4').classList.remove('active');
+}
+
+function goToStep2() {
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  const isNgn = selectedMethod.startsWith('ngn_');
+  document.getElementById('step2Title').textContent = `${methodLabels[selectedMethod]} Details`;
+  document.getElementById('addressLabel').textContent = addressLabels[selectedMethod];
+  document.getElementById('inputAddress').placeholder = addressPlaceholders[selectedMethod];
+  document.getElementById('fieldAccName').style.display = isNgn ? 'block' : 'none';
+  document.getElementById('ngnFeeBox').style.display = isNgn ? 'flex' : 'none';
+  document.getElementById('feePreview').style.display = isNgn ? 'block' : 'none';
+  document.getElementById('amtLabel').textContent = isNgn ? 'Amount (₦ Naira)' : 'Amount (USD)';
+  document.getElementById('amtPrefix').textContent = isNgn ? '₦' : '$';
+  document.getElementById('wMsg').className = 'msg-box';
+  updateFeePreview();
+}
+
+function goToStep2Back() {
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('step2').style.display = 'block';
+}
+
+function updateFeePreview() {
+  if (!selectedMethod.startsWith('ngn_')) return;
+  const raw = parseFloat(document.getElementById('inputAmount').value) || 0;
+  if (!raw) return;
+  const isNgn = displayCurrency === 'ngn' || document.getElementById('amtLabel').textContent.includes('₦');
+  const amtNgn = isNgn ? raw : raw * usdToNgn;
+  const fee = amtNgn * 0.20;
+  const net = amtNgn - fee;
+  document.getElementById('fp_amount').textContent = `₦${amtNgn.toLocaleString('en-NG', {maximumFractionDigits:0})}`;
+  document.getElementById('fp_fee').textContent = `-₦${fee.toLocaleString('en-NG', {maximumFractionDigits:0})}`;
+  document.getElementById('fp_net').textContent = `₦${net.toLocaleString('en-NG', {maximumFractionDigits:0})}`;
+}
+
+function goToConfirm() {
+  const isNgn = selectedMethod.startsWith('ngn_');
+  const address = document.getElementById('inputAddress').value.trim();
+  const accName = document.getElementById('inputAccName').value.trim();
+  const rawAmt = parseFloat(document.getElementById('inputAmount').value);
+
+  if (isNgn && !accName) return showMsg('Enter your account name');
+  if (!address) return showMsg('Enter ' + addressLabels[selectedMethod].toLowerCase());
+  if (!rawAmt || rawAmt <= 0) return showMsg('Enter amount');
+
+  // Convert to USD for balance check
+  const amtUsd = isNgn ? rawAmt / usdToNgn : rawAmt;
+  if (amtUsd < 1) return showMsg(`Minimum withdrawal is $1.00 (₦${usdToNgn.toLocaleString()})`);
+  if (amtUsd > userBalance) return showMsg(`Insufficient balance. You have $${userBalance.toFixed(2)}`);
+
+  // Fill confirm card
+  const feeUsd = isNgn ? amtUsd * 0.20 : 0;
+  const netUsd = amtUsd - feeUsd;
+  const displayAmt = isNgn ? `₦${rawAmt.toLocaleString('en-NG',{maximumFractionDigits:0})}` : `$${rawAmt.toFixed(2)}`;
+  const displayFee = isNgn ? `₦${(rawAmt*0.20).toLocaleString('en-NG',{maximumFractionDigits:0})}` : '';
+  const displayNet = isNgn ? `₦${(rawAmt*0.80).toLocaleString('en-NG',{maximumFractionDigits:0})}` : '';
+
+  document.getElementById('confirmAmtDisplay').textContent = displayAmt;
+  document.getElementById('confirmMethodLabel').textContent = `via ${methodLabels[selectedMethod]}`;
+  document.getElementById('confirmAddrLabel').textContent = isNgn ? 'Account Number' : (selectedMethod === 'paypal' ? 'PayPal Email' : 'Wallet Address');
+  document.getElementById('confirmAddrVal').textContent = address;
+  document.getElementById('confirmPayMethod').textContent = methodLabels[selectedMethod];
+  document.getElementById('confirmBal').textContent = `$${userBalance.toFixed(2)}`;
+
+  if (accName) {
+    document.getElementById('confirmNameRow').style.display = 'flex';
+    document.getElementById('confirmNameVal').textContent = accName;
+  }
+  if (isNgn) {
+    document.getElementById('confirmFeeRow').style.display = 'flex';
+    document.getElementById('confirmNetRow').style.display = 'flex';
+    document.getElementById('confirmFeeVal').textContent = `-${displayFee} (20%)`;
+    document.getElementById('confirmNetVal').textContent = displayNet;
+  } else {
+    document.getElementById('confirmFeeRow').style.display = 'none';
+    document.getElementById('confirmNetRow').style.display = 'none';
+  }
+
+  document.getElementById('wMsg').className = 'msg-box';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').classList.add('active');
+}
+
+function goToPin() {
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('step4').classList.add('active');
+  pinVal = '';
+  updateDots(0);
+}
+function goToConfirmBack() {
+  document.getElementById('step4').classList.remove('active');
+  document.getElementById('step3').classList.add('active');
+  pinVal = '';
+}
+
+// ── PIN ──
+function pinKey(d) {
+  if (pinVal.length >= 4) return;
+  pinVal += d;
+  updateDots(pinVal.length);
+  if (pinVal.length === 4) setTimeout(submitWithdraw, 180);
+}
+function pinDel() {
+  if (pinVal.length > 0) { pinVal = pinVal.slice(0,-1); updateDots(pinVal.length); }
+}
+function updateDots(n) {
+  ['pd0','pd1','pd2','pd3'].forEach((id,i) => {
+    document.getElementById(id).className = 'pin-dot' + (i < n ? ' filled' : '');
+  });
+}
+function shakeDots() {
+  ['pd0','pd1','pd2','pd3'].forEach(id => { document.getElementById(id).className = 'pin-dot error-dot'; });
+  setTimeout(() => { pinVal = ''; updateDots(0); }, 700);
+}
+
+// ── Submit ──
+async function submitWithdraw() {
+  const isNgn = selectedMethod.startsWith('ngn_');
+  const address = document.getElementById('inputAddress').value.trim();
+  const accName = document.getElementById('inputAccName').value.trim();
+  const rawAmt = parseFloat(document.getElementById('inputAmount').value);
+  const currency = isNgn ? 'ngn' : 'usd';
+
+  try {
+    const body = { amount: rawAmt, method: selectedMethod, address, pin: pinVal, currency };
+    if (accName) body.account_name = accName;
+
+    const res = await fetch(`${API}/api/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('protege_token')}` },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      ['pd0','pd1','pd2','pd3'].forEach(id => {
+        const d = document.getElementById(id);
+        d.className = 'pin-dot filled';
+        d.style.background = 'var(--accent2)';
+        d.style.borderColor = 'var(--accent2)';
+      });
+
+      const amtUsd = isNgn ? rawAmt / usdToNgn : rawAmt;
+      const feeUsd = isNgn ? amtUsd * 0.20 : 0;
+      const netUsd = amtUsd - feeUsd;
+      const displayAmt = isNgn ? `₦${rawAmt.toLocaleString('en-NG',{maximumFractionDigits:0})}` : `$${rawAmt.toFixed(2)}`;
+
+      successData = {
+        displayAmt,
+        amtUsd,
+        feeUsd,
+        netUsd,
+        isNgn,
+        method: methodLabels[selectedMethod],
+        address,
+        accName,
+        newBalance: data.new_balance,
+        ref: 'TXN' + Date.now().toString().slice(-12).toUpperCase(),
+        date: new Date().toLocaleString([], { dateStyle:'medium', timeStyle:'short' })
+      };
+      userBalance = data.new_balance;
+      setTimeout(showSuccess, 350);
+    } else {
+      shakeDots();
+      showToast(data.message || 'Failed. Check your PIN.', 'error');
+    }
+  } catch(e) {
+    shakeDots();
+    showToast('Connection error. Try again.', 'error');
+  }
+}
+
+function showSuccess() {
+  document.getElementById('successAmtDisplay').textContent = successData.displayAmt;
+
+  // Fill detail card
+  const recipientStr = successData.accName
+    ? `${successData.accName}\n${methodLabels[selectedMethod]} | ${successData.address}`
+    : successData.address;
+  document.getElementById('sd_recipient').textContent = successData.accName
+    ? `${successData.accName} | ${successData.address}` : successData.address;
+  document.getElementById('sd_amount').textContent = successData.displayAmt;
+  document.getElementById('sd_method').textContent = successData.method;
+  document.getElementById('sd_ref').textContent = successData.ref;
+  document.getElementById('sd_date').textContent = successData.date;
+
+  if (successData.isNgn && successData.feeUsd > 0) {
+    document.getElementById('sd_fee_row').style.display = 'flex';
+    document.getElementById('sd_fee').textContent = `-₦${(successData.feeUsd * usdToNgn).toLocaleString('en-NG',{maximumFractionDigits:0})}`;
+  } else {
+    document.getElementById('sd_fee_row').style.display = 'none';
+  }
+
+  document.getElementById('mainPage').style.display = 'none';
+  document.getElementById('successScreen').classList.add('show');
+  launchConfetti();
+}
+
+function showViewDetails() {
+  const card = document.getElementById('detailsCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  card.scrollIntoView({ behavior:'smooth' });
+}
+
+function resetPage() {
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('detailsCard').style.display = 'none';
+  document.getElementById('mainPage').style.display = 'block';
+  goToStep1();
+  pinVal = '';
+  document.getElementById('inputAddress').value = '';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputAccName').value = '';
+  updateBalDisplay();
+}
+
+function shareReceipt() {
+  const feeText = successData.isNgn ? `\nService Fee (20%): ₦${(successData.feeUsd * usdToNgn).toLocaleString('en-NG',{maximumFractionDigits:0})}` : '';
+  const text = `🎉 Protege Wallet\n\n✅ Withdrawal Submitted\n━━━━━━━━━━━━━━━\nAmount: ${successData.displayAmt}${feeText}\nMethod: ${successData.method}\n${successData.accName ? 'Account: ' + successData.accName + '\n' : ''}Address: ${successData.address}\nStatus: ⏳ Pending (24hrs)\nRef: ${successData.ref}\nDate: ${successData.date}\n\nPowered by Protege App`;
+  if (navigator.share) {
+    navigator.share({ title:'Withdrawal Receipt', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Receipt copied!', 'success'));
+  }
+}
+
+// ── Confetti ──
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const colors = ['#6c63ff','#00d4aa','#f7c948','#ff6b9d','#fff','#8b83ff'];
+  const pieces = Array.from({length:120}, () => ({
+    x: Math.random() * canvas.width, y: Math.random() * -canvas.height,
+    w: Math.random() * 10 + 4, h: Math.random() * 6 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rotation: Math.random() * 360, speed: Math.random() * 3 + 2,
+    rotSpeed: (Math.random() - 0.5) * 6, swing: (Math.random() - 0.5) * 2
+  }));
+  let frame = 0;
+  (function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI/180);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore();
+      p.y += p.speed; p.x += p.swing; p.rotation += p.rotSpeed;
+    });
+    if (++frame < 200) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  })();
+}
+
+// ── Receive ──
+function copyNumber() {
+  try { navigator.clipboard.writeText(userPhone); } catch(e) {
+    const el = document.createElement('input'); el.value = userPhone;
+    document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+  }
+  const btn = document.getElementById('copyNumBtn');
+  btn.textContent = '✓ Copied'; btn.classList.add('copied');
+  showToast('Phone number copied!', 'success');
+  setTimeout(() => { btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy`; btn.classList.remove('copied'); }, 2000);
+}
+function shareReceive(p) {
+  const text = `Send money to me on Protege!\nMy number: ${userPhone}\nDownload: https://protege-app.com`;
+  if (p === 'wa') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+  else if (p === 'tg') window.open(`https://t.me/share/url?url=https://protege-app.com&text=${encodeURIComponent(text)}`,'_blank');
+  else window.open(`sms:?body=${encodeURIComponent(text)}`,'_blank');
+}
+
+// ── Helpers ──
+function showMsg(msg) {
+  const el = document.getElementById('wMsg');
+  el.className = 'msg-box error';
+  el.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${msg}`;
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); }));
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`; t.innerHTML = msg;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+window.addEventListener('load', loadUser);
+</script>
+</body>
+</html>
