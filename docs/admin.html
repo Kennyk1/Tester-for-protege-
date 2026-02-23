@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Protege Admin</title>
+<style>
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --card: #13131f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --red: #ff4466;
+    --gold: #f7c948;
+    --green: #00d4aa;
+    --text: #f0f0f8;
+    --muted: #5a5a70;
+    --mono: 'JetBrains Mono', 'DM Sans', monospace;
+    --sans: 'Syne', -apple-system, sans-serif;
+  }
+
+  html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 32px;
+  }
+  .login-logo {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 50px rgba(108,99,255,0.4);
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 40px rgba(108,99,255,0.3)} 50%{box-shadow:0 0 70px rgba(108,99,255,0.6)} }
+  .login-title { font-family: var(--sans); font-size: 24px; font-weight: 800; text-align: center; letter-spacing: -0.02em; }
+  .login-sub { font-size: 12px; color: var(--muted); text-align: center; }
+  .login-box {
+    width: 300px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 20px; padding: 28px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .login-input {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: var(--mono);
+    font-size: 14px; outline: none; transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #8b83ff);
+    border: none; border-radius: 12px; color: white;
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s;
+    box-shadow: 0 6px 24px rgba(108,99,255,0.35);
+  }
+  .login-btn:active { transform: scale(0.97); }
+  .login-error { font-size: 12px; color: var(--red); text-align: center; display: none; }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; height: 100vh; display: none; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0 0 24px;
+  }
+  .sidebar-brand {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brand-icon {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .brand-name { font-family: var(--sans); font-size: 14px; font-weight: 800; }
+  .brand-badge { font-size: 9px; color: var(--red); background: rgba(255,68,102,0.12); border: 1px solid rgba(255,68,102,0.2); padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.08em; }
+
+  .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    transition: all 0.2s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); background: rgba(108,99,255,0.1); }
+  .nav-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .nav-item.active .nav-icon { background: rgba(108,99,255,0.15); }
+  .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; min-width: 18px; text-align: center; }
+
+  .sidebar-footer { padding: 0 10px; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    padding: 16px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-title { font-family: var(--sans); font-size: 18px; font-weight: 800; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .admin-badge { font-size: 11px; color: var(--red); background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+  .logout-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,68,102,0.08); border: 1px solid rgba(255,68,102,0.2); color: var(--red); font-family: var(--mono); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .logout-btn:hover { background: rgba(255,68,102,0.15); }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── SECTION ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: rgba(108,99,255,0.2); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .stat-value { font-family: var(--sans); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.purple { color: var(--accent); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+  }
+  .search-input {
+    flex: 1; padding: 12px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: var(--mono);
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-select {
+    padding: 12px 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: var(--mono);
+    font-size: 13px; outline: none; cursor: pointer;
+  }
+  .action-btn-sm {
+    padding: 10px 16px; border-radius: 10px; border: none;
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .action-btn-sm:active { transform: scale(0.95); }
+  .btn-purple { background: rgba(108,99,255,0.15); color: var(--accent); border: 1px solid rgba(108,99,255,0.2); }
+  .btn-green { background: rgba(0,212,170,0.12); color: var(--green); border: 1px solid rgba(0,212,170,0.2); }
+  .btn-red { background: rgba(255,68,102,0.12); color: var(--red); border: 1px solid rgba(255,68,102,0.2); }
+  .btn-gold { background: rgba(247,201,72,0.1); color: var(--gold); border: 1px solid rgba(247,201,72,0.2); }
+  .btn-solid-purple { background: linear-gradient(135deg, var(--accent), #8b83ff); color: white; box-shadow: 0 4px 16px rgba(108,99,255,0.3); border: none; }
+  .btn-solid-red { background: linear-gradient(135deg, var(--red), #ff2244); color: white; box-shadow: 0 4px 16px rgba(255,68,102,0.3); border: none; }
+  .btn-solid-green { background: linear-gradient(135deg, var(--green), #00b894); color: white; box-shadow: 0 4px 16px rgba(0,212,170,0.3); border: none; }
+
+  /* ── USER CARDS ── */
+  .users-list { display: flex; flex-direction: column; gap: 10px; }
+  .user-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; transition: border-color 0.2s;
+  }
+  .user-card.banned { border-color: rgba(255,68,102,0.25); }
+  .user-card-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px; cursor: pointer;
+  }
+  .user-avatar {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: 16px; font-weight: 800; color: white;
+  }
+  .user-avatar.banned-av { background: linear-gradient(135deg, #ff4466, #ff2244); }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .user-phone { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .user-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .user-balance { font-family: var(--sans); font-size: 16px; font-weight: 800; color: var(--green); }
+  .banned-tag { font-size: 10px; background: rgba(255,68,102,0.12); color: var(--red); border: 1px solid rgba(255,68,102,0.2); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .user-card-actions {
+    display: none; padding: 0 16px 16px;
+    flex-wrap: wrap; gap: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card-actions.open { display: flex; }
+  .user-detail-panel {
+    display: none; padding: 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .user-detail-panel.open { display: block; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: var(--muted); }
+  .detail-val { font-weight: 600; }
+  .chevron { transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-family: var(--sans); font-size: 15px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 12px 16px; text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 16px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .status-pending { background: rgba(247,201,72,0.12); color: var(--gold); }
+  .status-approved { background: rgba(0,212,170,0.12); color: var(--green); }
+  .status-declined { background: rgba(255,68,102,0.12); color: var(--red); }
+  .method-chip { font-size: 11px; background: rgba(108,99,255,0.1); color: var(--accent); padding: 3px 8px; border-radius: 6px; }
+  .amount-pos { color: var(--green); font-weight: 700; }
+  .amount-neg { color: var(--red); font-weight: 700; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    width: 100%; max-width: 400px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px;
+    animation: popIn 0.25s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  @keyframes popIn { from{transform:scale(0.88);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal-title { font-family: var(--sans); font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .modal-input {
+    width: 100%; padding: 13px 16px; margin-bottom: 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: var(--mono);
+    font-size: 14px; outline: none; transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-actions button { flex: 1; padding: 13px; border-radius: 12px; font-family: var(--mono); font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.15s; border: none; }
+  .modal-actions button:active { transform: scale(0.96); }
+  .btn-cancel { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .modal-msg { font-size: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; display: none; }
+  .modal-msg.error { display: block; background: rgba(255,68,102,0.1); color: var(--red); border: 1px solid rgba(255,68,102,0.2); }
+  .modal-msg.success { display: block; background: rgba(0,212,170,0.1); color: var(--green); border: 1px solid rgba(0,212,170,0.2); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 20px; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; z-index: 9999;
+    transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1); white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(0,212,170,0.3); color: var(--green); }
+  .toast.error { border-color: rgba(255,68,102,0.3); color: var(--red); }
+  .toast.info { border-color: rgba(108,99,255,0.3); color: var(--accent); }
+
+  /* ── BROADCAST ── */
+  .broadcast-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 12px; }
+  .broadcast-title { font-family: var(--sans); font-size: 15px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+  .broadcast-msg { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .broadcast-date { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .textarea { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; resize: vertical; min-height: 100px; transition: border-color 0.2s; margin-bottom: 12px; }
+  .textarea:focus { border-color: var(--accent); }
+
+  /* ── SECTION HEADER ── */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-family: var(--sans); font-size: 20px; font-weight: 800; }
+  .section-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── REFERRAL SECTION ── */
+  .ref-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+  .ref-user { flex: 1; }
+  .ref-name { font-weight: 700; font-size: 14px; }
+  .ref-phone { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .ref-count { font-family: var(--sans); font-size: 22px; font-weight: 800; color: var(--gold); }
+  .ref-label { font-size: 10px; color: var(--muted); text-align: right; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { width: 56px; }
+    .brand-name, .nav-item span, .sidebar-footer { display: none; }
+    .nav-item { justify-content: center; padding: 12px; }
+    .brand-icon { margin: 0 auto; }
+    .brand-badge { display: none; }
+    .sidebar-brand { justify-content: center; padding: 20px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <svg width="32" height="32" viewBox="0 0 44 44"><rect x="16" y="4" width="12" height="20" rx="6" fill="white"/><path d="M8 20c0 7.732 6.268 14 14 14s14-6.268 14-14" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><line x1="22" y1="34" x2="22" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="16" y1="40" x2="28" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+  </div>
+  <div>
+    <div class="login-title">Protege Admin</div>
+    <div class="login-sub">Restricted access — authorised personnel only</div>
+  </div>
+  <div class="login-box">
+    <input class="login-input" type="password" id="adminKeyInput" placeholder="Enter admin secret key" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+    <div class="login-error" id="loginError">Incorrect admin key. Access denied.</div>
+    <button class="login-btn" onclick="doAdminLogin()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-right:6px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Unlock Dashboard
+    </button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 44 44"><rect x="16" y="4" width="12" height="20" rx="6" fill="white"/><path d="M8 20c0 7.732 6.268 14 14 14s14-6.268 14-14" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Protege</div>
+        <div class="brand-badge">ADMIN</div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <button class="nav-item active" onclick="showSection('overview')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" onclick="showSection('users')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <span>All Users</span>
+      </button>
+      <button class="nav-item" onclick="showSection('withdrawals')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <span>Withdrawals</span>
+        <span class="nav-badge" id="pendingBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" onclick="showSection('transactions')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div>
+        <span>Transactions</span>
+      </button>
+      <button class="nav-item" onclick="showSection('referrals')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <span>Referrals</span>
+      </button>
+      <button class="nav-item" onclick="showSection('broadcast')">
+        <div class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <span>Broadcast</span>
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" style="color:var(--red)" onclick="adminLogout()">
+        <div class="nav-icon" style="background:rgba(255,68,102,0.08)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff4466" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+        <span>Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Overview</div>
+      <div class="topbar-right">
+        <div class="admin-badge">⚡ ADMIN</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="section active" id="section-overview">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Total Users</div>
+            <div class="stat-value purple" id="statUsers">—</div>
+            <div class="stat-sub" id="statBanned"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> System Balance</div>
+            <div class="stat-value green" id="statBalance">—</div>
+            <div class="stat-sub">Total user funds</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pending Withdrawals</div>
+            <div class="stat-value gold" id="statPending">—</div>
+            <div class="stat-sub" id="statPendingAmt"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Total Paid Out</div>
+            <div class="stat-value green" id="statPaid">—</div>
+            <div class="stat-sub">Approved withdrawals</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="showSection('withdrawals')">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Action Required</div>
+            <div class="stat-value red" id="statAction">—</div>
+            <div class="stat-sub">Tap to review →</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Total Referrals</div>
+            <div class="stat-value gold" id="statRefs">—</div>
+            <div class="stat-sub">Across all users</div>
+          </div>
+        </div>
+
+        <!-- Recent Withdrawals preview -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div><div class="table-title">Pending Withdrawals</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Needs your attention</div></div>
+            <button class="action-btn-sm btn-gold" onclick="showSection('withdrawals')">View All →</button>
+          </div>
+          <table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="overviewWdTable"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ USERS ══ -->
+      <div class="section" id="section-users">
+        <div class="section-head">
+          <div><div class="section-title">All Users</div><div class="section-sub" id="userCount">Loading...</div></div>
+          <button class="action-btn-sm btn-purple" onclick="loadUsers()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="search-bar">
+          <input class="search-input" id="userSearch" placeholder="Search by name or phone..." oninput="filterUsers()"/>
+        </div>
+        <div class="users-list" id="usersList">
+          <div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">Loading users...</div>
+        </div>
+      </div>
+
+      <!-- ══ WITHDRAWALS ══ -->
+      <div class="section" id="section-withdrawals">
+        <div class="section-head">
+          <div><div class="section-title">Withdrawals</div><div class="section-sub">Approve or decline requests</div></div>
+          <button class="action-btn-sm btn-purple" onclick="loadWithdrawals()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="search-bar">
+          <select class="filter-select" id="wdFilter" onchange="loadWithdrawals()">
+            <option value="all">All Status</option>
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Address / Account</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="wdTable"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ TRANSACTIONS ══ -->
+      <div class="section" id="section-transactions">
+        <div class="section-head">
+          <div><div class="section-title">All Transactions</div><div class="section-sub">Full platform transaction log</div></div>
+          <button class="action-btn-sm btn-purple" onclick="loadTransactions()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead>
+          <tbody id="txTable"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ REFERRALS ══ -->
+      <div class="section" id="section-referrals">
+        <div class="section-head">
+          <div><div class="section-title">Referral Tracking</div><div class="section-sub">Top referrers sorted by count</div></div>
+          <button class="action-btn-sm btn-purple" onclick="loadReferrals()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div id="referralList" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">Loading...</div>
+        </div>
+      </div>
+
+      <!-- ══ BROADCAST ══ -->
+      <div class="section" id="section-broadcast">
+        <div class="section-head">
+          <div><div class="section-title">Broadcast</div><div class="section-sub">Send announcements to all users</div></div>
+        </div>
+        <div class="table-wrap" style="margin-bottom:20px;padding:20px">
+          <div class="table-title" style="margin-bottom:16px">New Announcement</div>
+          <input class="modal-input" id="broadcastTitle" placeholder="Title e.g. Maintenance Notice" style="margin-bottom:12px"/>
+          <textarea class="textarea" id="broadcastMsg" placeholder="Type your message here... This will be shown to all users when they open the app."></textarea>
+          <div class="modal-msg" id="broadcastMsg2"></div>
+          <button class="action-btn-sm btn-solid-purple" style="width:100%;justify-content:center;padding:14px;font-size:13px" onclick="sendBroadcast()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send to All Users
+          </button>
+        </div>
+        <div class="table-title" style="margin-bottom:12px">Previous Announcements</div>
+        <div id="broadcastList">
+          <div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ BALANCE MODAL ══ -->
+<div class="modal-overlay" id="balanceModal" onclick="if(event.target===this)closeModal('balanceModal')">
+  <div class="modal">
+    <div class="modal-title" id="balanceModalTitle">Update Balance</div>
+    <div class="modal-sub" id="balanceModalSub">Current balance: —</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="setBalanceAction('add')" id="btnAdd" class="action-btn-sm btn-solid-green" style="flex:1;justify-content:center;padding:11px">＋ Add</button>
+      <button onclick="setBalanceAction('deduct')" id="btnDeduct" class="action-btn-sm btn-red" style="flex:1;justify-content:center;padding:11px">－ Deduct</button>
+    </div>
+    <input class="modal-input" type="number" id="balanceAmount" placeholder="Amount in USD e.g. 5.00" step="0.01" min="0.01"/>
+    <input class="modal-input" id="balanceNote" placeholder="Note (optional) e.g. Bonus reward"/>
+    <div class="modal-msg" id="balanceModalMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('balanceModal')">Cancel</button>
+      <button style="background:linear-gradient(135deg,var(--accent),#8b83ff);color:white;box-shadow:0 4px 16px rgba(108,99,255,0.3)" onclick="submitBalance()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DECLINE MODAL ══ -->
+<div class="modal-overlay" id="declineModal" onclick="if(event.target===this)closeModal('declineModal')">
+  <div class="modal">
+    <div class="modal-title">Decline Withdrawal</div>
+    <div class="modal-sub">The user's balance will be <span style="color:var(--green)">automatically refunded</span>. Add a reason (optional).</div>
+    <input class="modal-input" id="declineNote" placeholder="Reason e.g. Invalid address"/>
+    <div class="modal-msg" id="declineModalMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('declineModal')">Cancel</button>
+      <button style="background:linear-gradient(135deg,var(--red),#ff2244);color:white;box-shadow:0 4px 16px rgba(255,68,102,0.3)" onclick="submitDecline()">Decline & Refund</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE MODAL ══ -->
+<div class="modal-overlay" id="deleteModal" onclick="if(event.target===this)closeModal('deleteModal')">
+  <div class="modal">
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <div style="width:56px;height:56px;border-radius:16px;background:rgba(255,68,102,0.12);border:1px solid rgba(255,68,102,0.2);display:flex;align-items:center;justify-content:center">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </div>
+    </div>
+    <div class="modal-title" style="text-align:center">Delete Account?</div>
+    <div class="modal-sub" style="text-align:center">This permanently deletes the user, all their transactions and withdrawal history. <span style="color:var(--red);font-weight:700">Cannot be undone.</span></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
+      <button style="background:linear-gradient(135deg,var(--red),#ff2244);color:white" onclick="submitDelete()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+let ADMIN_KEY = '';
+let allUsers = [];
+let currentUserId = null;
+let currentWdId = null;
+let balanceAction = 'add';
+
+// ── LOGIN ──
+function doAdminLogin() {
+  const key = document.getElementById('adminKeyInput').value.trim();
+  if (!key) return;
+  ADMIN_KEY = key;
+  fetch(`${API}/api/admin/stats`, { headers: { 'X-Admin-Key': key } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        loadAll();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+        ADMIN_KEY = '';
+      }
+    })
+    .catch(() => { document.getElementById('loginError').style.display = 'block'; ADMIN_KEY = ''; });
+}
+
+function adminLogout() {
+  ADMIN_KEY = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminKeyInput').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+// ── NAVIGATION ──
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item')[['overview','users','withdrawals','transactions','referrals','broadcast'].indexOf(name)].classList.add('active');
+  const titles = { overview:'Overview', users:'All Users', withdrawals:'Withdrawals', transactions:'Transactions', referrals:'Referral Tracking', broadcast:'Broadcast' };
+  document.getElementById('topbarTitle').textContent = titles[name];
+  if (name === 'users' && allUsers.length === 0) loadUsers();
+  if (name === 'withdrawals') loadWithdrawals();
+  if (name === 'transactions') loadTransactions();
+  if (name === 'referrals') loadReferrals();
+  if (name === 'broadcast') loadBroadcasts();
+}
+
+// ── LOAD ALL ──
+function loadAll() {
+  loadStats();
+  loadUsers();
+  loadOverviewWithdrawals();
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(`${API}/api/admin/stats`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success) return;
+    const s = d.stats;
+    document.getElementById('statUsers').textContent = s.total_users;
+    document.getElementById('statBanned').textContent = s.banned_users > 0 ? `${s.banned_users} banned` : 'All active';
+    document.getElementById('statBalance').textContent = `$${s.total_balance.toFixed(2)}`;
+    document.getElementById('statPending').textContent = s.pending_withdrawals;
+    document.getElementById('statPendingAmt').textContent = `$${s.pending_amount.toFixed(2)} pending`;
+    document.getElementById('statPaid').textContent = `$${s.total_paid.toFixed(2)}`;
+    document.getElementById('statAction').textContent = s.pending_withdrawals;
+    document.getElementById('statRefs').textContent = allUsers.reduce((a,u) => a + (u.total_referrals||0), 0) || '—';
+    if (s.pending_withdrawals > 0) {
+      document.getElementById('pendingBadge').style.display = 'block';
+      document.getElementById('pendingBadge').textContent = s.pending_withdrawals;
+    }
+  } catch(e) {}
+}
+
+// ── USERS ──
+async function loadUsers() {
+  try {
+    const r = await fetch(`${API}/api/admin/users`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success) return;
+    allUsers = d.users;
+    document.getElementById('userCount').textContent = `${d.total} users registered`;
+    renderUsers(allUsers);
+  } catch(e) { document.getElementById('usersList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px">Failed to load users</div>'; }
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  const filtered = allUsers.filter(u => u.name.toLowerCase().includes(q) || u.phone.includes(q));
+  renderUsers(filtered);
+}
+
+function renderUsers(users) {
+  const list = document.getElementById('usersList');
+  if (!users.length) { list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">No users found</div>'; return; }
+  list.innerHTML = users.map(u => {
+    const initial = u.name[0].toUpperCase();
+    const joined = new Date(u.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'});
+    return `
+      <div class="user-card ${u.is_banned ? 'banned' : ''}" id="uc-${u.id}">
+        <div class="user-card-header" onclick="toggleUser('${u.id}')">
+          <div class="user-avatar ${u.is_banned ? 'banned-av' : ''}">${initial}</div>
+          <div class="user-info">
+            <div class="user-name">
+              ${u.name}
+              ${u.is_banned ? '<span class="banned-tag">BANNED</span>' : ''}
+            </div>
+            <div class="user-phone">${u.phone} · ${u.total_referrals} referrals · Joined ${joined}</div>
+          </div>
+          <div class="user-meta">
+            <div class="user-balance">$${parseFloat(u.balance).toFixed(2)}</div>
+            <svg class="chevron" id="chev-${u.id}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="user-card-actions" id="ua-${u.id}">
+          <button class="action-btn-sm btn-purple" onclick="openBalanceModal('${u.id}','${u.name}',${u.balance})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Edit Balance
+          </button>
+          <button class="action-btn-sm ${u.is_banned ? 'btn-green' : 'btn-gold'}" onclick="toggleBan('${u.id}',${u.is_banned})">
+            ${u.is_banned ? '✓ Unban' : '⊘ Ban'}
+          </button>
+          <button class="action-btn-sm btn-red" onclick="openDeleteModal('${u.id}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Delete
+          </button>
+          <button class="action-btn-sm btn-purple" onclick="viewUserDetail('${u.id}')">
+            View Details
+          </button>
+        </div>
+        <div class="user-detail-panel" id="udp-${u.id}">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Loading details...</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleUser(id) {
+  const actions = document.getElementById('ua-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = actions.classList.contains('open');
+  actions.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+  if (!isOpen) document.getElementById('udp-' + id).classList.remove('open');
+}
+
+async function viewUserDetail(id) {
+  const panel = document.getElementById('udp-' + id);
+  panel.classList.toggle('open');
+  if (!panel.classList.contains('open')) return;
+  panel.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Loading...</div>';
+  try {
+    const r = await fetch(`${API}/api/admin/user/${id}`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success) { panel.innerHTML = '<div style="color:var(--red);font-size:12px;padding:16px">Failed to load</div>'; return; }
+    const u = d.user;
+    const refs = d.referrals;
+    const txs = d.transactions.slice(0, 5);
+    panel.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Recent Transactions</div>
+          ${txs.length ? txs.map(t => `
+            <div class="detail-row">
+              <span class="detail-label">${t.description?.slice(0,28) || t.type}</span>
+              <span class="${parseFloat(t.amount) > 0 ? 'amount-pos' : 'amount-neg'}">${parseFloat(t.amount) > 0 ? '+' : ''}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</span>
+            </div>`).join('') : '<div style="font-size:12px;color:var(--muted)">No transactions</div>'}
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Referrals (${refs.length})</div>
+          ${refs.length ? refs.map(r => {
+            const joined = new Date(r.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'});
+            const sameDevice = refs.filter(x => x.device_id && x.device_id === r.device_id).length > 1;
+            const sameIp = refs.filter(x => x.signup_ip && x.signup_ip === r.signup_ip).length > 1;
+            return `
+            <div style="background:rgba(0,0,0,0.2);border:1px solid ${sameDevice||sameIp?'rgba(255,68,102,0.3)':'var(--border)'};border-radius:10px;padding:10px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-weight:700;font-size:13px">${r.name}</span>
+                <span style="color:var(--green);font-weight:700;font-size:13px">$${parseFloat(r.balance).toFixed(2)}</span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${r.phone} · ${joined}</div>
+              <div style="display:flex;flex-direction:column;gap:3px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+                <div style="display:flex;align-items:center;gap:6px;font-size:10px">
+                  <span style="color:var(--muted);min-width:60px">Device ID</span>
+                  <span style="color:${sameDevice?'var(--red)':'var(--accent)'};font-family:var(--mono);word-break:break-all">${r.device_id||'—'}</span>
+                  ${sameDevice?'<span style="background:rgba(255,68,102,0.15);color:var(--red);padding:1px 6px;border-radius:4px;font-weight:700;flex-shrink:0">⚠ DUPE</span>':''}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:10px">
+                  <span style="color:var(--muted);min-width:60px">IP</span>
+                  <span style="color:${sameIp?'var(--red)':'var(--muted)'};font-family:var(--mono)">${r.signup_ip||'—'}</span>
+                  ${sameIp?'<span style="background:rgba(255,68,102,0.15);color:var(--red);padding:1px 6px;border-radius:4px;font-weight:700;flex-shrink:0">⚠ DUPE</span>':''}
+                </div>
+              </div>
+            </div>`;
+          }).join('') : '<div style="font-size:12px;color:var(--muted)">No referrals yet</div>'}
+        </div>
+      </div>
+      <div class="detail-row"><span class="detail-label">Referral Code</span><span class="detail-val" style="color:var(--accent);letter-spacing:0.1em">${u.referral_code}</span></div>
+    `;
+  } catch(e) { panel.innerHTML = '<div style="color:var(--red);font-size:12px;padding:16px">Error loading</div>'; }
+}
+
+// ── BAN ──
+async function toggleBan(id, isBanned) {
+  try {
+    const r = await fetch(`${API}/api/admin/user/${id}/ban`, {
+      method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ban: !isBanned })
+    });
+    const d = await r.json();
+    if (d.success) { showToast(d.message, 'success'); loadUsers(); }
+    else showToast(d.message, 'error');
+  } catch(e) { showToast('Connection error', 'error'); }
+}
+
+// ── BALANCE MODAL ──
+function openBalanceModal(id, name, balance) {
+  currentUserId = id;
+  balanceAction = 'add';
+  document.getElementById('balanceModalTitle').textContent = `Edit Balance — ${name}`;
+  document.getElementById('balanceModalSub').textContent = `Current balance: $${parseFloat(balance).toFixed(2)}`;
+  document.getElementById('balanceAmount').value = '';
+  document.getElementById('balanceNote').value = '';
+  document.getElementById('balanceModalMsg').className = 'modal-msg';
+  updateBalanceBtns();
+  openModal('balanceModal');
+}
+
+function setBalanceAction(action) {
+  balanceAction = action;
+  updateBalanceBtns();
+}
+
+function updateBalanceBtns() {
+  document.getElementById('btnAdd').className = `action-btn-sm ${balanceAction==='add' ? 'btn-solid-green' : 'btn-green'}`;
+  document.getElementById('btnDeduct').className = `action-btn-sm ${balanceAction==='deduct' ? 'btn-solid-red' : 'btn-red'}`;
+}
+
+async function submitBalance() {
+  const amount = parseFloat(document.getElementById('balanceAmount').value);
+  const note = document.getElementById('balanceNote').value.trim() || 'Admin adjustment';
+  const msgEl = document.getElementById('balanceModalMsg');
+  if (!amount || amount <= 0) { msgEl.className = 'modal-msg error'; msgEl.textContent = 'Enter a valid amount'; return; }
+  try {
+    const r = await fetch(`${API}/api/admin/user/${currentUserId}/balance`, {
+      method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: balanceAction, amount, note })
+    });
+    const d = await r.json();
+    if (d.success) {
+      msgEl.className = 'modal-msg success';
+      msgEl.textContent = `Done! New balance: $${d.new_balance.toFixed(2)}`;
+      loadUsers(); loadStats();
+      setTimeout(() => closeModal('balanceModal'), 1500);
+    } else {
+      msgEl.className = 'modal-msg error';
+      msgEl.textContent = d.message;
+    }
+  } catch(e) { msgEl.className = 'modal-msg error'; msgEl.textContent = 'Connection error'; }
+}
+
+// ── DELETE MODAL ──
+function openDeleteModal(id) {
+  currentUserId = id;
+  openModal('deleteModal');
+}
+
+async function submitDelete() {
+  try {
+    const r = await fetch(`${API}/api/admin/user/${currentUserId}/delete`, {
+      method: 'DELETE', headers: { 'X-Admin-Key': ADMIN_KEY }
+    });
+    const d = await r.json();
+    if (d.success) { showToast('User deleted', 'success'); closeModal('deleteModal'); loadUsers(); loadStats(); }
+    else showToast(d.message, 'error');
+  } catch(e) { showToast('Connection error', 'error'); }
+}
+
+// ── WITHDRAWALS ──
+async function loadWithdrawals() {
+  const status = document.getElementById('wdFilter').value;
+  const tbody = document.getElementById('wdTable');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>';
+  try {
+    const r = await fetch(`${API}/api/admin/withdrawals?status=${status}`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px">Failed to load</td></tr>'; return; }
+    if (!d.withdrawals.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No withdrawals found</td></tr>'; return; }
+    tbody.innerHTML = d.withdrawals.map(w => {
+      const user = w.users || {};
+      const date = new Date(w.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'});
+      const methodMap = { usdt_bep20:'USDT BEP-20', usdt_trc20:'USDT TRC-20', paypal:'PayPal', ngn_opay:'OPay NGN', ngn_palmpay:'PalmPay NGN' };
+      const addr = w.account_name ? `${w.account_name} | ${w.address}` : w.address;
+      const wid = w.id;
+      return `<tr>
+        <td><div style="font-weight:700;font-size:13px">${user.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${user.phone||'—'}</div></td>
+        <td class="amount-neg">$${parseFloat(w.amount).toFixed(2)}</td>
+        <td><span class="method-chip">${methodMap[w.method]||w.method}</span></td>
+        <td style="font-size:11px;max-width:160px;word-break:break-all">${addr}</td>
+        <td style="font-size:11px;color:var(--muted)">${date}</td>
+        <td><span class="status-badge status-${w.status}">${w.status}</span>${w.admin_note ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${w.admin_note}</div>` : ''}</td>
+        <td>
+          ${w.status === 'pending' ? `
+            <div style="display:flex;gap:6px">
+              <button class="action-btn-sm btn-solid-green" onclick="approveWithdrawal('${wid}')">✓ Approve</button>
+              <button class="action-btn-sm btn-red" onclick="openDeclineModal('${wid}')">✕ Decline</button>
+            </div>` : '<span style="font-size:11px;color:var(--muted)">Processed</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px">Connection error</td></tr>'; }
+}
+
+async function loadOverviewWithdrawals() {
+  try {
+    const r = await fetch(`${API}/api/admin/withdrawals?status=pending`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    const tbody = document.getElementById('overviewWdTable');
+    if (!d.success || !d.withdrawals.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No pending withdrawals 🎉</td></tr>';
+      return;
+    }
+    const methodMap = { usdt_bep20:'USDT BEP-20', usdt_trc20:'USDT TRC-20', paypal:'PayPal', ngn_opay:'OPay NGN', ngn_palmpay:'PalmPay NGN' };
+    tbody.innerHTML = d.withdrawals.slice(0,5).map(w => {
+      const user = w.users || {};
+      const date = new Date(w.created_at).toLocaleDateString([], {day:'numeric',month:'short'});
+      const wid = w.id;
+      return `<tr>
+        <td><div style="font-weight:700;font-size:13px">${user.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${user.phone||'—'}</div></td>
+        <td class="amount-neg">$${parseFloat(w.amount).toFixed(2)}</td>
+        <td><span class="method-chip">${methodMap[w.method]||w.method}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${date}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="action-btn-sm btn-solid-green" onclick="approveWithdrawal('${wid}')">✓</button>
+            <button class="action-btn-sm btn-red" onclick="openDeclineModal('${wid}')">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function approveWithdrawal(wdId) {
+  try {
+    const r = await fetch(`${API}/api/admin/withdrawal/${wdId}/action`, {
+      method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approved' })
+    });
+    const d = await r.json();
+    if (d.success) { showToast('Withdrawal approved ✓', 'success'); loadWithdrawals(); loadOverviewWithdrawals(); loadStats(); }
+    else showToast(d.message, 'error');
+  } catch(e) { showToast('Connection error', 'error'); }
+}
+
+function openDeclineModal(id) {
+  currentWdId = id;
+  document.getElementById('declineNote').value = '';
+  document.getElementById('declineModalMsg').className = 'modal-msg';
+  openModal('declineModal');
+}
+
+async function submitDecline() {
+  const note = document.getElementById('declineNote').value.trim();
+  try {
+    const r = await fetch(`${API}/api/admin/withdrawal/${currentWdId}/action`, {
+      method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'declined', note })
+    });
+    const d = await r.json();
+    if (d.success) { showToast('Declined & refunded', 'success'); closeModal('declineModal'); loadWithdrawals(); loadOverviewWithdrawals(); loadStats(); }
+    else { document.getElementById('declineModalMsg').className = 'modal-msg error'; document.getElementById('declineModalMsg').textContent = d.message; }
+  } catch(e) { document.getElementById('declineModalMsg').className = 'modal-msg error'; document.getElementById('declineModalMsg').textContent = 'Connection error'; }
+}
+
+// ── TRANSACTIONS ──
+async function loadTransactions() {
+  const tbody = document.getElementById('txTable');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>';
+  try {
+    const r = await fetch(`${API}/api/admin/transactions?limit=100`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success || !d.transactions.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No transactions</td></tr>'; return; }
+    const typeColors = { referral_bonus:'var(--accent)', signup_bonus:'var(--gold)', withdraw:'var(--red)', transfer:'var(--muted)', deposit:'var(--green)' };
+    tbody.innerHTML = d.transactions.map(t => {
+      const user = t.users || {};
+      const date = new Date(t.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'});
+      const amt = parseFloat(t.amount);
+      return `<tr>
+        <td><div style="font-weight:700;font-size:13px">${user.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${user.phone||'—'}</div></td>
+        <td><span style="font-size:11px;color:${typeColors[t.type]||'var(--muted)'};background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:6px;font-weight:700">${t.type}</span></td>
+        <td class="${amt > 0 ? 'amount-pos' : 'amount-neg'}">${amt > 0 ? '+' : ''}$${Math.abs(amt).toFixed(2)}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:200px">${t.description||'—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${date}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red);padding:24px">Connection error</td></tr>'; }
+}
+
+// ── REFERRALS ──
+async function loadReferrals() {
+  const list = document.getElementById('referralList');
+  list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">Loading...</div>';
+  try {
+    const r = await fetch(`${API}/api/admin/users`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success) return;
+    const sorted = d.users.filter(u => u.total_referrals > 0).sort((a,b) => b.total_referrals - a.total_referrals);
+    if (!sorted.length) { list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">No referrals yet</div>'; return; }
+    list.innerHTML = sorted.map((u, i) => `
+      <div class="ref-card" style="flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer" onclick="toggleRefDetail('ref-${u.id}')">
+          <div style="font-family:var(--sans);font-size:20px;font-weight:800;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--muted)'};width:28px;text-align:center">${i+1}</div>
+          <div class="user-avatar">${u.name[0].toUpperCase()}</div>
+          <div class="ref-user">
+            <div class="ref-name">${u.name}</div>
+            <div class="ref-phone">${u.phone} · Code: <span style="color:var(--accent);font-weight:700">${u.referral_code}</span></div>
+          </div>
+          <div style="text-align:right;margin-left:auto">
+            <div class="ref-count">${u.total_referrals}</div>
+            <div class="ref-label">referrals</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--sans);font-size:16px;font-weight:800;color:var(--green)">$${parseFloat(u.balance).toFixed(2)}</div>
+            <div class="ref-label">balance</div>
+          </div>
+          <svg style="transition:transform 0.2s;flex-shrink:0" id="refchev-${u.id}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="ref-${u.id}" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted);padding:12px 0 8px;text-transform:uppercase;letter-spacing:0.06em">Referred Users — Device & IP Check</div>
+          <div id="refdetail-${u.id}" style="font-size:12px;color:var(--muted)">Loading...</div>
+        </div>
+      </div>`).join('');
+    document.getElementById('statRefs').textContent = sorted.reduce((a,u) => a + u.total_referrals, 0);
+  } catch(e) { list.innerHTML = '<div style="text-align:center;color:var(--red);padding:40px;font-size:13px">Connection error</div>'; }
+}
+
+async function toggleRefDetail(panelId) {
+  const panel = document.getElementById(panelId);
+  const userId = panelId.replace('ref-', '');
+  const chev = document.getElementById('refchev-' + userId);
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (isOpen) return;
+
+  const detailEl = document.getElementById('refdetail-' + userId);
+  detailEl.innerHTML = 'Loading...';
+  try {
+    const r = await fetch(`${API}/api/admin/user/${userId}`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success || !d.referrals.length) { detailEl.innerHTML = '<span style="color:var(--muted)">No referred users yet</span>'; return; }
+    const refs = d.referrals;
+    detailEl.innerHTML = refs.map(ref => {
+      const sameDevice = refs.filter(x => x.device_id && x.device_id === ref.device_id).length > 1;
+      const sameIp = refs.filter(x => x.signup_ip && x.signup_ip === ref.signup_ip).length > 1;
+      const joined = new Date(ref.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'});
+      return `
+        <div style="background:rgba(0,0,0,0.25);border:1px solid ${sameDevice||sameIp?'rgba(255,68,102,0.35)':'var(--border)'};border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-weight:700">${ref.name}</span>
+            <span style="color:var(--green);font-weight:700">$${parseFloat(ref.balance).toFixed(2)}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${ref.phone} · Joined ${joined}</div>
+          <div style="display:flex;flex-direction:column;gap:5px;padding-top:8px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px">
+              <span style="color:var(--muted);min-width:55px;flex-shrink:0">Device ID</span>
+              <span style="color:${sameDevice?'var(--red)':'var(--accent)'};font-family:var(--mono);word-break:break-all;flex:1">${ref.device_id||'—'}</span>
+              ${sameDevice?'<span style="background:rgba(255,68,102,0.15);color:var(--red);padding:2px 7px;border-radius:5px;font-weight:700;font-size:10px;flex-shrink:0">⚠ DUPE DEVICE</span>':''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--muted);min-width:55px;flex-shrink:0">IP Address</span>
+              <span style="color:${sameIp?'var(--red)':'var(--muted)'};font-family:var(--mono);flex:1">${ref.signup_ip||'—'}</span>
+              ${sameIp?'<span style="background:rgba(255,68,102,0.15);color:var(--red);padding:2px 7px;border-radius:5px;font-weight:700;font-size:10px;flex-shrink:0">⚠ DUPE IP</span>':''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) { detailEl.innerHTML = '<span style="color:var(--red)">Failed to load</span>'; }
+}
+
+// ── BROADCAST ──
+async function sendBroadcast() {
+  const title = document.getElementById('broadcastTitle').value.trim();
+  const msg = document.getElementById('broadcastMsg').value.trim();
+  const el = document.getElementById('broadcastMsg2');
+  if (!title || !msg) { el.className = 'modal-msg error'; el.textContent = 'Title and message are required'; return; }
+  try {
+    const r = await fetch(`${API}/api/admin/broadcast`, {
+      method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, message: msg })
+    });
+    const d = await r.json();
+    if (d.success) {
+      el.className = 'modal-msg success'; el.textContent = 'Announcement sent to all users!';
+      document.getElementById('broadcastTitle').value = '';
+      document.getElementById('broadcastMsg').value = '';
+      loadBroadcasts();
+    } else { el.className = 'modal-msg error'; el.textContent = d.message; }
+  } catch(e) { el.className = 'modal-msg error'; el.textContent = 'Connection error'; }
+}
+
+async function loadBroadcasts() {
+  const list = document.getElementById('broadcastList');
+  list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">Loading...</div>';
+  try {
+    const r = await fetch(`${API}/api/admin/broadcasts`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (!d.success || !d.announcements.length) { list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">No announcements yet</div>'; return; }
+    list.innerHTML = d.announcements.map(a => {
+      const date = new Date(a.created_at).toLocaleString([], {dateStyle:'medium',timeStyle:'short'});
+      return `<div class="broadcast-card">
+        <div class="broadcast-title">
+          ${a.title}
+          <button class="action-btn-sm btn-red" onclick="deleteBroadcast('${a.id}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Delete
+          </button>
+        </div>
+        <div class="broadcast-msg">${a.message}</div>
+        <div class="broadcast-date">${date} · ${a.is_active ? '<span style="color:var(--green)">Active</span>' : '<span style="color:var(--muted)">Inactive</span>'}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { list.innerHTML = '<div style="text-align:center;color:var(--red);padding:24px;font-size:13px">Connection error</div>'; }
+}
+
+async function deleteBroadcast(id) {
+  try {
+    const r = await fetch(`${API}/api/admin/broadcast/${id}/delete`, { method: 'DELETE', headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const d = await r.json();
+    if (d.success) { showToast('Announcement deleted', 'success'); loadBroadcasts(); }
+  } catch(e) { showToast('Connection error', 'error'); }
+}
+
+// ── HELPERS ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`;
+  t.textContent = msg;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+document.getElementById('adminKeyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAdminLogin();
+});
+</script>
+</body>
+</html>
