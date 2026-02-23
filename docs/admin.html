@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Protege Admin</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-ExtraBold.ttf') format('truetype'); font-weight:800; font-display:swap; }
+  @font-face { font-family:'Syne'; src:url('fonts/Syne-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'DM Sans'; src:url('fonts/DMSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,8 +27,8 @@
     --green: #00d4aa;
     --text: #f0f0f8;
     --muted: #5a5a70;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', 'DM Sans', monospace;
+    --sans: 'Syne', -apple-system, sans-serif;
   }
 
   html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); -webkit-font-smoothing: antialiased; overflow: hidden; }
