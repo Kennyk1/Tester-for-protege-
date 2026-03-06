@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Fund Wallet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#08080f;
+    --surface:#0f0f1a;
+    --card:#141422;
+    --border:rgba(255,255,255,0.07);
+    --accent:#6c63ff;
+    --accent2:#00d4aa;
+    --green:#00e676;
+    --red:#ff5252;
+    --text:#f0f0f8;
+    --muted:#6b6b85;
+    --usdt:#26a17b;
+  }
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+
+  /* ── Orbs ── */
+  .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.08;}
+  .orb1{width:400px;height:400px;background:var(--accent);top:-150px;left:-100px;animation:drift 12s ease-in-out infinite alternate;}
+  .orb2{width:300px;height:300px;background:var(--accent2);bottom:50px;right:-80px;animation:drift 10s ease-in-out infinite alternate-reverse;}
+  @keyframes drift{from{transform:translate(0,0);}to{transform:translate(30px,40px);}}
+
+  /* ── Screens ── */
+  .screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;overflow:hidden;transition:opacity 0.3s,transform 0.3s;}
+  .screen.hidden{opacity:0;pointer-events:none;transform:translateY(20px);}
+
+  /* ════════════════════════════
+     PIN SCREEN
+  ════════════════════════════ */
+  #pinScreen{background:var(--bg);align-items:center;justify-content:center;padding:32px 24px;}
+  .pin-logo{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 0 50px rgba(108,99,255,0.3);}
+  .pin-title{font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-0.03em;}
+  .pin-subtitle{font-size:14px;color:var(--muted);margin-bottom:40px;text-align:center;}
+  .pin-dots{display:flex;gap:14px;margin-bottom:40px;}
+  .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted);background:transparent;transition:all 0.2s;}
+  .pin-dot.filled{background:var(--accent);border-color:var(--accent);box-shadow:0 0 10px rgba(108,99,255,0.5);}
+  .pin-dot.error{background:var(--red);border-color:var(--red);}
+  .pin-keypad{display:grid;grid-template-columns:repeat(3,80px);gap:14px;}
+  .pin-key{width:80px;height:80px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .pin-key:active{background:rgba(108,99,255,0.2);border-color:var(--accent);transform:scale(0.93);}
+  .pin-key.del{font-size:16px;color:var(--muted);}
+  .pin-key.empty{background:transparent;border:none;pointer-events:none;}
+  .pin-error-msg{font-size:13px;color:var(--red);min-height:20px;margin-top:-28px;margin-bottom:12px;text-align:center;}
+  .pin-forgot{font-size:13px;color:var(--muted);margin-top:20px;text-decoration:underline;cursor:pointer;}
+
+  /* ════════════════════════════
+     MAIN WALLET SCREEN
+  ════════════════════════════ */
+  #walletScreen{background:var(--bg);}
+
+  /* Top bar */
+  .wallet-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;flex-shrink:0;}
+  .wallet-back{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .wallet-topbar-title{font-size:17px;font-weight:700;}
+  .wallet-lock-btn{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+  /* Scroll content */
+  .wallet-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px 100px;}
+  .wallet-content::-webkit-scrollbar{display:none;}
+
+  /* Balance card */
+  .balance-card{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,170,0.08));border:1px solid rgba(108,99,255,0.2);border-radius:24px;padding:28px 24px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .balance-card::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(108,99,255,0.05);}
+  .balance-label{font-size:12px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+  .balance-amount{font-family:'JetBrains Mono',monospace;font-size:40px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px;display:flex;align-items:baseline;gap:8px;}
+  .balance-coin{font-size:16px;color:var(--accent2);font-weight:500;}
+  .balance-network{display:inline-flex;align-items:center;gap:6px;background:rgba(38,161,123,0.12);border:1px solid rgba(38,161,123,0.25);border-radius:999px;padding:4px 12px;font-size:11px;color:var(--usdt);font-weight:600;letter-spacing:0.04em;}
+  .balance-usd{font-size:13px;color:var(--muted);margin-top:8px;}
+
+  /* Action buttons */
+  .wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .wallet-action-btn{padding:16px;border-radius:18px;border:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all 0.2s;-webkit-tap-highlight-color:transparent;}
+  .wallet-action-btn:active{transform:scale(0.96);}
+  .wallet-action-btn.deposit{border-color:rgba(0,212,170,0.25);background:rgba(0,212,170,0.06);}
+  .wallet-action-btn.withdraw{border-color:rgba(108,99,255,0.25);background:rgba(108,99,255,0.06);}
+  .action-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+  .deposit .action-icon{background:rgba(0,212,170,0.12);}
+  .withdraw .action-icon{background:rgba(108,99,255,0.12);}
+  .action-label{font-size:13px;font-weight:600;color:var(--text);}
+
+  /* Privacy notice */
+  .privacy-card{background:rgba(108,99,255,0.05);border:1px solid rgba(108,99,255,0.12);border-radius:16px;padding:14px 16px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-start;}
+  .privacy-icon{flex-shrink:0;margin-top:1px;}
+  .privacy-text{font-size:12px;color:var(--muted);line-height:1.6;}
+  .privacy-text strong{color:var(--text);}
+
+  /* Transactions */
+  .section-title{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;}
+  .tx-list{display:flex;flex-direction:column;gap:10px;}
+  .tx-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+  .tx-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .tx-icon.deposit{background:rgba(0,230,118,0.1);}
+  .tx-icon.withdrawal{background:rgba(255,82,82,0.1);}
+  .tx-info{flex:1;min-width:0;}
+  .tx-type{font-size:14px;font-weight:600;text-transform:capitalize;}
+  .tx-date{font-size:11px;color:var(--muted);margin-top:2px;}
+  .tx-amount{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;text-align:right;}
+  .tx-amount.deposit{color:var(--green);}
+  .tx-amount.withdrawal{color:var(--red);}
+  .tx-status{font-size:10px;font-weight:600;text-align:right;margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+  .tx-status.confirmed,.tx-status.completed{color:var(--green);}
+  .tx-status.pending{color:#f7c948;}
+  .tx-status.failed,.tx-status.refunded{color:var(--red);}
+  .tx-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
+
+  /* ════════════════════════════
+     DEPOSIT SCREEN
+  ════════════════════════════ */
+  #depositScreen{background:var(--bg);}
+  .deposit-content{flex:1;overflow-y:auto;padding:0 20px 40px;}
+  .qr-wrapper{background:white;border-radius:20px;padding:20px;margin:20px 0;display:flex;align-items:center;justify-content:center;}
+  #qrCode{width:200px;height:200px;}
+  .address-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;}
+  .address-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
+  .address-value{font-family:'JetBrains Mono',monospace;font-size:13px;word-break:break-all;line-height:1.6;color:var(--text);}
+  .copy-btn{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,var(--accent2),#00b894);border:none;color:white;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform 0.15s;}
+  .copy-btn:active{transform:scale(0.97);}
+  .deposit-warning{background:rgba(247,201,72,0.08);border:1px solid rgba(247,201,72,0.2);border-radius:14px;padding:14px 16px;font-size:12px;color:#f7c948;line-height:1.7;margin-top:16px;}
+
+  /* ════════════════════════════
+     WITHDRAW SCREEN
+  ════════════════════════════ */
+  #withdrawScreen{background:var(--bg);}
+  .withdraw-content{flex:1;overflow-y:auto;padding:0 20px 40px;}
+  .withdraw-tabs{display:flex;background:var(--card);border-radius:14px;padding:4px;margin-bottom:24px;}
+  .withdraw-tab{flex:1;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .withdraw-tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+  .withdraw-form{display:flex;flex-direction:column;gap:16px;}
+  .form-group{display:flex;flex-direction:column;gap:8px;}
+  .form-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+  .form-input{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;width:100%;}
+  .form-input:focus{border-color:var(--accent);}
+  .form-input::placeholder{color:var(--muted);}
+  .balance-hint{font-size:12px;color:var(--muted);text-align:right;}
+  .balance-hint span{color:var(--accent2);font-weight:600;}
+  .max-btn{background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.2);border-radius:8px;padding:4px 10px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;}
+  .submit-btn{padding:18px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#8b83ff);border:none;color:white;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;transition:transform 0.15s;box-shadow:0 8px 24px rgba(108,99,255,0.3);}
+  .submit-btn:active{transform:scale(0.97);}
+  .submit-btn:disabled{opacity:0.5;pointer-events:none;}
+
+  /* ── Loading spinner ── */
+  .spinner{width:22px;height:22px;border:2.5px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── Toast ── */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e2e;border:1px solid var(--border);border-radius:14px;padding:14px 20px;font-size:14px;font-weight:500;z-index:9999;transition:transform 0.3s;white-space:nowrap;max-width:90vw;text-align:center;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.success{border-color:rgba(0,230,118,0.3);color:var(--green);}
+  .toast.error{border-color:rgba(255,82,82,0.3);color:var(--red);}
+
+  /* ── Setup PIN screen ── */
+  #setupPinScreen{background:var(--bg);align-items:center;justify-content:center;padding:32px 24px;}
+  .setup-steps{display:flex;gap:8px;margin-bottom:32px;}
+  .setup-step{width:40px;height:4px;border-radius:2px;background:var(--border);}
+  .setup-step.active{background:var(--accent);}
+  .setup-step.done{background:var(--accent2);}
+</style>
+</head>
+<body>
+
+<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div></div>
+
+<!-- ══ SETUP PIN SCREEN ══ -->
+<div class="screen hidden" id="setupPinScreen">
+  <div class="pin-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  </div>
+  <div class="setup-steps">
+    <div class="setup-step active" id="step1"></div>
+    <div class="setup-step" id="step2"></div>
+  </div>
+  <div class="pin-title" id="setupTitle">Create Wallet PIN</div>
+  <div class="pin-subtitle" id="setupSubtitle">Choose a 6-digit PIN to secure your wallet</div>
+  <div class="pin-dots" id="setupDots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-error-msg" id="setupError"></div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="setupKeyPress('1')">1</div>
+    <div class="pin-key" onclick="setupKeyPress('2')">2</div>
+    <div class="pin-key" onclick="setupKeyPress('3')">3</div>
+    <div class="pin-key" onclick="setupKeyPress('4')">4</div>
+    <div class="pin-key" onclick="setupKeyPress('5')">5</div>
+    <div class="pin-key" onclick="setupKeyPress('6')">6</div>
+    <div class="pin-key" onclick="setupKeyPress('7')">7</div>
+    <div class="pin-key" onclick="setupKeyPress('8')">8</div>
+    <div class="pin-key" onclick="setupKeyPress('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="setupKeyPress('0')">0</div>
+    <div class="pin-key del" onclick="setupKeyDelete()">⌫</div>
+  </div>
+</div>
+
+<!-- ══ PIN SCREEN ══ -->
+<div class="screen" id="pinScreen">
+  <div class="pin-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  </div>
+  <div class="pin-title">Fund Wallet</div>
+  <div class="pin-subtitle">Enter your 6-digit PIN to access your wallet</div>
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-error-msg" id="pinError"></div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="pinKeyPress('1')">1</div>
+    <div class="pin-key" onclick="pinKeyPress('2')">2</div>
+    <div class="pin-key" onclick="pinKeyPress('3')">3</div>
+    <div class="pin-key" onclick="pinKeyPress('4')">4</div>
+    <div class="pin-key" onclick="pinKeyPress('5')">5</div>
+    <div class="pin-key" onclick="pinKeyPress('6')">6</div>
+    <div class="pin-key" onclick="pinKeyPress('7')">7</div>
+    <div class="pin-key" onclick="pinKeyPress('8')">8</div>
+    <div class="pin-key" onclick="pinKeyPress('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinKeyPress('0')">0</div>
+    <div class="pin-key del" onclick="pinKeyDelete()">⌫</div>
+  </div>
+  <div class="pin-forgot" onclick="showToast('Contact support to reset your PIN', 'error')">Forgot PIN?</div>
+</div>
+
+<!-- ══ MAIN WALLET SCREEN ══ -->
+<div class="screen hidden" id="walletScreen">
+  <div class="wallet-topbar">
+    <div class="wallet-back" onclick="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="wallet-topbar-title">Fund Wallet</div>
+    <div class="wallet-lock-btn" onclick="lockWallet()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+  </div>
+
+  <div class="wallet-content">
+
+    <!-- Balance card -->
+    <div class="balance-card">
+      <div class="balance-label">Total Balance</div>
+      <div class="balance-amount">
+        <span id="walletBalance">0.00</span>
+        <span class="balance-coin">USDT</span>
+      </div>
+      <div class="balance-network">
+        <svg width="8" height="8" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#26a17b"/></svg>
+        TRON · TRC20
+      </div>
+      <div class="balance-usd" id="balanceUsd">≈ $0.00 USD</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="wallet-actions">
+      <div class="wallet-action-btn deposit" onclick="showDeposit()">
+        <div class="action-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+        <div class="action-label">Deposit</div>
+      </div>
+      <div class="wallet-action-btn withdraw" onclick="showWithdraw()">
+        <div class="action-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+        <div class="action-label">Withdraw</div>
+      </div>
+    </div>
+
+    <!-- Privacy notice -->
+    <div class="privacy-card">
+      <div class="privacy-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="privacy-text">
+        <strong>Zero-knowledge privacy.</strong> No identity verification required. Your deposit address is unique to you. We never store private keys. Your funds are protected by your PIN only.
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="section-title">Recent Transactions</div>
+    <div class="tx-list" id="txList">
+      <div class="tx-empty">No transactions yet</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DEPOSIT SCREEN ══ -->
+<div class="screen hidden" id="depositScreen">
+  <div class="wallet-topbar">
+    <div class="wallet-back" onclick="showWallet()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="wallet-topbar-title">Deposit USDT</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="deposit-content">
+
+    <!-- Step 1: Enter amount -->
+    <div id="depositStep1">
+      <div style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px;">Enter amount to deposit via USDT TRC20</div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <div class="form-label">Amount (USDT)</div>
+        <input type="number" class="form-input" id="depositAmountInput" placeholder="e.g. 10" min="10" step="0.01"/>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;">Minimum: $10 USDT</div>
+      </div>
+      <button class="copy-btn" id="generateDepositBtn" onclick="generateDeposit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Generate Deposit Address
+      </button>
+      <div class="deposit-warning" style="margin-top:16px;">
+        ⚠️ Only send <strong>USDT TRC20</strong> to the generated address. Do not send ERC20 or BEP20 — funds will be lost permanently.
+      </div>
+    </div>
+
+    <!-- Step 2: Show address + QR -->
+    <div id="depositStep2" style="display:none;">
+      <div style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:4px;">Send exactly this amount to the address below</div>
+
+      <!-- Exact amount to send -->
+      <div class="address-box" style="margin-top:12px;text-align:center;">
+        <div class="address-label">Send Exactly</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--accent2);" id="exactAmount">0.00</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">USDT TRC20</div>
+      </div>
+
+      <div class="qr-wrapper">
+        <div id="qrCode"></div>
+      </div>
+
+      <div class="address-box">
+        <div class="address-label">Deposit Address (TRC20)</div>
+        <div class="address-value" id="depositAddress">Loading...</div>
+      </div>
+
+      <button class="copy-btn" onclick="copyAddress()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Address
+      </button>
+
+      <div class="deposit-warning" style="margin-top:16px;">
+        ⏳ Send the exact amount shown above. Your balance will update automatically once confirmed on the blockchain (usually 1-3 minutes).
+      </div>
+
+      <button onclick="resetDeposit()" style="width:100%;padding:14px;border-radius:14px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:14px;cursor:pointer;margin-top:12px;">
+        ← New Deposit
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ WITHDRAW SCREEN ══ -->
+<div class="screen hidden" id="withdrawScreen">
+  <div class="wallet-topbar">
+    <div class="wallet-back" onclick="showWallet()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="wallet-topbar-title">Withdraw</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="withdraw-content">
+
+    <div class="withdraw-tabs">
+      <button class="withdraw-tab active" id="tabCrypto" onclick="switchTab('crypto')">Crypto Wallet</button>
+      <button class="withdraw-tab" id="tabBank" onclick="switchTab('bank')">Nigerian Bank</button>
+    </div>
+
+    <!-- Crypto form -->
+    <div id="cryptoForm" class="withdraw-form">
+      <div class="form-group">
+        <div class="form-label">TRON Wallet Address</div>
+        <input type="text" class="form-input" id="cryptoAddress" placeholder="T..."/>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="form-label">Amount (USDT)</div>
+          <button class="max-btn" onclick="setMaxAmount()">MAX</button>
+        </div>
+        <input type="number" class="form-input" id="cryptoAmount" placeholder="0.00" min="1" step="0.01"/>
+        <div class="balance-hint">Available: <span id="availableBalance">0.00</span> USDT</div>
+      </div>
+      <button class="submit-btn" id="cryptoSubmitBtn" onclick="submitWithdraw('crypto')">Request Withdrawal</button>
+    </div>
+
+    <!-- Bank form -->
+    <div id="bankForm" class="withdraw-form" style="display:none">
+      <div style="background:rgba(247,201,72,0.08);border:1px solid rgba(247,201,72,0.2);border-radius:14px;padding:14px 16px;font-size:13px;color:#f7c948;margin-bottom:8px;">
+        ⚡ Bank withdrawals are processed manually within 24 hours. Rate: market rate at time of processing.
+      </div>
+      <div class="form-group">
+        <div class="form-label">Bank Name</div>
+        <input type="text" class="form-input" id="bankName" placeholder="e.g. GTBank, Access, Opay"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Account Number</div>
+        <input type="text" class="form-input" id="bankAccount" placeholder="0123456789" maxlength="10"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Account Name</div>
+        <input type="text" class="form-input" id="bankAccountName" placeholder="Full name on account"/>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="form-label">Amount (USDT)</div>
+          <button class="max-btn" onclick="setMaxAmount()">MAX</button>
+        </div>
+        <input type="number" class="form-input" id="bankAmount" placeholder="0.00" min="5" step="0.01"/>
+        <div class="balance-hint">Available: <span id="availableBalance2">0.00</span> USDT · Min $5</div>
+      </div>
+      <button class="submit-btn" id="bankSubmitBtn" onclick="submitWithdraw('bank')">Request Bank Withdrawal</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+const token = localStorage.getItem('protege_token');
+let walletBalance = 0;
+let depositAddress = '';
+let walletSessionToken = null;
+let currentPin = '';
+let setupPin1 = '';
+let setupStep = 1; // 1=enter, 2=confirm
+
+// ══ INIT ══════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  if (!token) { window.location.href = 'login.html'; return; }
+
+  // Check if PIN exists
+  try {
+    const res = await fetch(`${API}/api/wallet/pin/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ pin: '000000' }) // test call to check if setup needed
+    });
+    const data = await res.json();
+    if (data.needs_setup) {
+      showScreen('setupPinScreen');
+    } else {
+      showScreen('pinScreen');
+    }
+  } catch(e) {
+    showScreen('pinScreen');
+  }
+});
+
+// ══ SCREEN MANAGEMENT ═════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ══ SETUP PIN ═════════════════════════════════════════
+let setupEntry = '';
+function setupKeyPress(digit) {
+  if (setupEntry.length >= 6) return;
+  setupEntry += digit;
+  updateSetupDots();
+  if (setupEntry.length === 6) {
+    setTimeout(() => handleSetupComplete(), 300);
+  }
+}
+function setupKeyDelete() {
+  setupEntry = setupEntry.slice(0, -1);
+  updateSetupDots();
+  document.getElementById('setupError').textContent = '';
+}
+function updateSetupDots() {
+  const dots = document.getElementById('setupDots').querySelectorAll('.pin-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < setupEntry.length));
+}
+async function handleSetupComplete() {
+  if (setupStep === 1) {
+    setupPin1 = setupEntry;
+    setupEntry = '';
+    setupStep = 2;
+    document.getElementById('step1').classList.replace('active','done');
+    document.getElementById('step2').classList.add('active');
+    document.getElementById('setupTitle').textContent = 'Confirm PIN';
+    document.getElementById('setupSubtitle').textContent = 'Enter your PIN again to confirm';
+    updateSetupDots();
+  } else {
+    if (setupEntry !== setupPin1) {
+      document.getElementById('setupError').textContent = 'PINs do not match. Try again.';
+      const dots = document.getElementById('setupDots').querySelectorAll('.pin-dot');
+      dots.forEach(d => { d.classList.add('error'); d.classList.remove('filled'); });
+      setTimeout(() => {
+        dots.forEach(d => d.classList.remove('error'));
+        setupEntry = ''; setupStep = 1; setupPin1 = '';
+        document.getElementById('step1').classList.replace('done','active');
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('setupTitle').textContent = 'Create Wallet PIN';
+        document.getElementById('setupSubtitle').textContent = 'Choose a 6-digit PIN to secure your wallet';
+        document.getElementById('setupError').textContent = '';
+        updateSetupDots();
+      }, 1000);
+      return;
+    }
+    // Save PIN
+    try {
+      const res = await fetch(`${API}/api/wallet/pin/setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ pin: setupEntry })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('PIN created successfully! 🎉', 'success');
+        setTimeout(() => showScreen('pinScreen'), 800);
+      } else {
+        document.getElementById('setupError').textContent = data.error || 'Failed to set PIN';
+      }
+    } catch(e) {
+      document.getElementById('setupError').textContent = 'Network error. Try again.';
+    }
+    setupEntry = '';
+  }
+}
+
+// ══ PIN ENTRY ══════════════════════════════════════════
+function pinKeyPress(digit) {
+  if (currentPin.length >= 6) return;
+  currentPin += digit;
+  updatePinDots();
+  if (currentPin.length === 6) setTimeout(verifyPin, 300);
+}
+function pinKeyDelete() {
+  currentPin = currentPin.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+function updatePinDots() {
+  const dots = document.getElementById('pinDots').querySelectorAll('.pin-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < currentPin.length));
+}
+async function verifyPin() {
+  try {
+    const res = await fetch(`${API}/api/wallet/pin/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ pin: currentPin })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      walletSessionToken = data.session_token;
+      currentPin = '';
+      updatePinDots();
+      await loadWalletData();
+      showScreen('walletScreen');
+    } else {
+      document.getElementById('pinError').textContent = data.error || 'Wrong PIN';
+      const dots = document.getElementById('pinDots').querySelectorAll('.pin-dot');
+      dots.forEach(d => { d.classList.add('error'); d.classList.remove('filled'); });
+      setTimeout(() => {
+        dots.forEach(d => d.classList.remove('error'));
+        currentPin = '';
+        updatePinDots();
+        document.getElementById('pinError').textContent = '';
+      }, 800);
+    }
+  } catch(e) {
+    document.getElementById('pinError').textContent = 'Network error. Try again.';
+    currentPin = '';
+    updatePinDots();
+  }
+}
+
+// ══ WALLET DATA ════════════════════════════════════════
+async function loadWalletData() {
+  try {
+    // Load balance
+    const balRes = await fetch(`${API}/api/wallet/balance`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const balData = await balRes.json();
+    if (balData.success) {
+      walletBalance = parseFloat(balData.balance) || 0;
+      document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
+      document.getElementById('balanceUsd').textContent = `≈ $${walletBalance.toFixed(2)} USD`;
+      document.getElementById('availableBalance').textContent = walletBalance.toFixed(2);
+      document.getElementById('availableBalance2').textContent = walletBalance.toFixed(2);
+    }
+
+    // Load transactions
+    const txRes = await fetch(`${API}/api/wallet/transactions`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const txData = await txRes.json();
+    if (txData.success) renderTransactions(txData.transactions);
+
+  } catch(e) {
+    console.error('Failed to load wallet data', e);
+  }
+}
+
+function renderTransactions(txs) {
+  const list = document.getElementById('txList');
+  if (!txs || txs.length === 0) {
+    list.innerHTML = '<div class="tx-empty">No transactions yet</div>';
+    return;
+  }
+  list.innerHTML = txs.map(tx => {
+    const isDeposit = tx.type === 'deposit';
+    const date = new Date(tx.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="tx-item">
+        <div class="tx-icon ${tx.type}">
+          ${isDeposit
+            ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`
+            : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff5252" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`
+          }
+        </div>
+        <div class="tx-info">
+          <div class="tx-type">${tx.type}</div>
+          <div class="tx-date">${date}</div>
+        </div>
+        <div>
+          <div class="tx-amount ${tx.type}">${isDeposit ? '+' : '-'}${parseFloat(tx.amount).toFixed(2)} USDT</div>
+          <div class="tx-status ${tx.status}">${tx.status}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══ DEPOSIT ════════════════════════════════════════════
+function showDeposit() {
+  resetDeposit();
+  showScreen('depositScreen');
+}
+
+function resetDeposit() {
+  document.getElementById('depositStep1').style.display = 'block';
+  document.getElementById('depositStep2').style.display = 'none';
+  document.getElementById('depositAmountInput').value = '';
+  document.getElementById('depositAddress').textContent = '';
+  document.getElementById('qrCode').innerHTML = '';
+  depositAddress = '';
+}
+
+async function generateDeposit() {
+  const amount = parseFloat(document.getElementById('depositAmountInput').value);
+  if (!amount || amount < 10) return showToast('Enter a valid amount (min $10)', 'error');
+
+  const btn = document.getElementById('generateDepositBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const res = await fetch(`${API}/api/wallet/deposit/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ amount })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      depositAddress = data.address;
+      document.getElementById('depositAddress').textContent = depositAddress;
+      document.getElementById('exactAmount').textContent = parseFloat(data.amount).toFixed(6);
+      generateQR(depositAddress);
+      document.getElementById('depositStep1').style.display = 'none';
+      document.getElementById('depositStep2').style.display = 'block';
+    } else {
+      showToast(data.error || 'Failed to generate address', 'error');
+    }
+  } catch(e) {
+    showToast('Network error. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Generate Deposit Address`;
+  }
+}
+
+function generateQR(address) {
+  const el = document.getElementById('qrCode');
+  el.innerHTML = '';
+  try {
+    new QRCode(el, {
+      text: address,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch(e) {
+    console.error('QR generation failed', e);
+  }
+}
+
+function copyAddress() {
+  if (!depositAddress) return;
+  navigator.clipboard.writeText(depositAddress).then(() => {
+    showToast('Address copied! 📋', 'success');
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = depositAddress;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Address copied! 📋', 'success');
+  });
+}
+
+// ══ WITHDRAW ═══════════════════════════════════════════
+function showWithdraw() {
+  document.getElementById('availableBalance').textContent = walletBalance.toFixed(2);
+  document.getElementById('availableBalance2').textContent = walletBalance.toFixed(2);
+  showScreen('withdrawScreen');
+}
+
+function switchTab(tab) {
+  document.getElementById('tabCrypto').classList.toggle('active', tab === 'crypto');
+  document.getElementById('tabBank').classList.toggle('active', tab === 'bank');
+  document.getElementById('cryptoForm').style.display = tab === 'crypto' ? 'flex' : 'none';
+  document.getElementById('bankForm').style.display = tab === 'bank' ? 'flex' : 'none';
+}
+
+function setMaxAmount() {
+  document.getElementById('cryptoAmount').value = walletBalance.toFixed(2);
+  document.getElementById('bankAmount').value = walletBalance.toFixed(2);
+}
+
+async function submitWithdraw(type) {
+  const btnId = type === 'crypto' ? 'cryptoSubmitBtn' : 'bankSubmitBtn';
+  const btn = document.getElementById(btnId);
+
+  let amount, destination;
+  if (type === 'crypto') {
+    amount = parseFloat(document.getElementById('cryptoAmount').value);
+    destination = document.getElementById('cryptoAddress').value.trim();
+    if (!destination) return showToast('Enter a TRON wallet address', 'error');
+  } else {
+    amount = parseFloat(document.getElementById('bankAmount').value);
+    const bankName = document.getElementById('bankName').value.trim();
+    const bankAcc = document.getElementById('bankAccount').value.trim();
+    const bankName2 = document.getElementById('bankAccountName').value.trim();
+    if (!bankName || !bankAcc || !bankName2) return showToast('Fill in all bank details', 'error');
+    if (amount < 10) return showToast('Minimum withdrawal is $10 USDT', 'error');
+    destination = `${bankName} | ${bankAcc} | ${bankName2}`;
+  }
+
+  if (!amount || amount < 1) return showToast('Minimum withdrawal is $1 USDT', 'error');
+  if (amount > walletBalance) return showToast('Insufficient balance', 'error');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const res = await fetch(`${API}/api/wallet/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        amount,
+        type,
+        destination,
+        idempotency_key: `${Date.now()}-${Math.random()}`
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Withdrawal request submitted! ✅', 'success');
+      walletBalance -= amount;
+      document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
+      setTimeout(() => showWallet(), 1500);
+    } else {
+      showToast(data.error || 'Failed to submit', 'error');
+    }
+  } catch(e) {
+    showToast('Network error. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = type === 'crypto' ? 'Request Withdrawal' : 'Request Bank Withdrawal';
+  }
+}
+
+// ══ UTILS ══════════════════════════════════════════════
+function showWallet() { showScreen('walletScreen'); loadWalletData(); }
+function lockWallet() { walletSessionToken = null; currentPin = ''; updatePinDots(); showScreen('pinScreen'); }
+function goBack() { window.location.href = 'dashboard.html'; }
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
