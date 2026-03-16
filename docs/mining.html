@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Protege Mining</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+<!-- Monetag In-Page Push (passive income) -->
+<script>(function(s){s.dataset.zone='9272446',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#08080f;
+    --card:#0f0f1e;
+    --card2:#141428;
+    --border:rgba(255,255,255,0.07);
+    --accent:#6c63ff;
+    --teal:#00d4aa;
+    --gold:#f7c948;
+    --text:#f0f0f8;
+    --muted:#6b6b8a;
+    --red:#ff5252;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+
+  /* BG orbs */
+  .orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:0.07;pointer-events:none;z-index:0;}
+  .orb1{width:400px;height:400px;background:var(--gold);top:-100px;right:-100px;animation:drift 14s ease-in-out infinite alternate;}
+  .orb2{width:300px;height:300px;background:var(--accent);bottom:0;left:-80px;animation:drift 11s ease-in-out infinite alternate-reverse;}
+  @keyframes drift{from{transform:translate(0,0);}to{transform:translate(25px,35px);}}
+
+  /* TOP BAR */
+  .topbar{position:sticky;top:0;z-index:10;background:rgba(8,8,15,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar-title{font-size:17px;font-weight:700;letter-spacing:-0.02em;}
+  .back-btn{width:38px;height:38px;border-radius:11px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .pgc-pill{background:rgba(247,201,72,0.1);border:1px solid rgba(247,201,72,0.25);border-radius:20px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:6px;}
+
+  /* CONTENT */
+  .content{padding:20px;position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:40px;}
+
+  /* MINER CARD */
+  .miner-card{background:linear-gradient(135deg,rgba(247,201,72,0.08),rgba(108,99,255,0.06));border:1px solid rgba(247,201,72,0.2);border-radius:24px;padding:24px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden;}
+  .miner-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(247,201,72,0.06),transparent 70%);pointer-events:none;}
+
+  /* Mining animation */
+  .miner-icon{width:100px;height:100px;margin:0 auto 16px;position:relative;}
+  .miner-circle{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,rgba(247,201,72,0.15),rgba(108,99,255,0.1));border:2px solid rgba(247,201,72,0.3);display:flex;align-items:center;justify-content:center;animation:minerPulse 2s ease-in-out infinite;}
+  @keyframes minerPulse{0%,100%{box-shadow:0 0 20px rgba(247,201,72,0.2);}50%{box-shadow:0 0 50px rgba(247,201,72,0.5),0 0 80px rgba(247,201,72,0.15);}}
+  .miner-pickaxe{font-size:44px;animation:swing 1.5s ease-in-out infinite;}
+  @keyframes swing{0%,100%{transform:rotate(-15deg);}50%{transform:rotate(15deg);}}
+
+  .miner-level-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(247,201,72,0.12);border:1px solid rgba(247,201,72,0.3);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gold);letter-spacing:0.04em;margin-bottom:12px;}
+  .miner-rate{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:600;color:var(--gold);margin-bottom:4px;letter-spacing:-0.02em;}
+  .miner-rate-label{font-size:13px;color:var(--muted);}
+
+  /* BOOST ACTIVE */
+  .boost-banner{background:linear-gradient(135deg,rgba(0,212,170,0.1),rgba(0,212,170,0.05));border:1px solid rgba(0,212,170,0.3);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-top:14px;}
+  .boost-icon{width:36px;height:36px;border-radius:10px;background:rgba(0,212,170,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .boost-text{flex:1;}
+  .boost-title{font-size:13px;font-weight:600;color:var(--teal);}
+  .boost-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* BALANCE SECTION */
+  .balance-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .bal-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;}
+  .bal-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+  .bal-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--text);}
+  .bal-value.gold{color:var(--gold);}
+  .bal-value.teal{color:var(--teal);}
+  .bal-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  /* PENDING COLLECT */
+  .collect-card{background:var(--card);border:1px solid rgba(247,201,72,0.2);border-radius:18px;padding:18px;margin-bottom:16px;}
+  .collect-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .collect-label{font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+  .collect-amount{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;color:var(--gold);}
+  .collect-btn{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#e6b800);border:none;color:#000;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .collect-btn:active{opacity:0.8;}
+  .collect-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* SECTION TITLE */
+  .section-title{font-size:13px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;margin-top:4px;}
+
+  /* ACTION BUTTONS */
+  .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .action-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.2s,background 0.2s;}
+  .action-card:active{background:var(--card2);}
+  .action-card.boost-card{border-color:rgba(0,212,170,0.2);}
+  .action-card.upgrade-card{border-color:rgba(108,99,255,0.2);}
+  .action-icon{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .ai-teal{background:rgba(0,212,170,0.1);}
+  .ai-purple{background:rgba(108,99,255,0.1);}
+  .ai-gold{background:rgba(247,201,72,0.1);}
+  .action-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+  .action-sub{font-size:12px;color:var(--muted);line-height:1.4;}
+
+  /* WITHDRAW CARD */
+  .withdraw-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
+  .form-label{font-size:12px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;}
+  .form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-family:'JetBrains Mono',sans-serif;font-size:16px;outline:none;margin-bottom:12px;}
+  .form-input:focus{border-color:var(--accent);}
+  .form-hint{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+  .withdraw-btn{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,var(--teal),#00aa88);border:none;color:#000;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s;}
+  .withdraw-btn:active{opacity:0.8;}
+
+  /* LEVELS */
+  .levels-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
+  .level-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .level-row:last-child{border-bottom:none;padding-bottom:0;}
+  .level-num{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+  .level-active{background:rgba(247,201,72,0.15);color:var(--gold);border:1px solid rgba(247,201,72,0.3);}
+  .level-locked{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+  .level-info{flex:1;}
+  .level-name{font-size:14px;font-weight:600;margin-bottom:2px;}
+  .level-rate{font-size:12px;color:var(--muted);}
+  .level-cost{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);text-align:right;flex-shrink:0;}
+
+  /* LEADERBOARD */
+  .leader-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
+  .leader-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .leader-row:last-child{border-bottom:none;}
+  .leader-rank{width:28px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--muted);flex-shrink:0;text-align:center;}
+  .leader-rank.top1{color:var(--gold);}
+  .leader-rank.top2{color:#c0c0c0;}
+  .leader-rank.top3{color:#cd7f32;}
+  .leader-name{flex:1;font-size:14px;font-weight:500;}
+  .leader-pgc{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);}
+
+  /* SPINNER */
+  .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e2e;border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;transition:transform 0.3s;z-index:100;white-space:nowrap;max-width:90vw;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.success{border-color:rgba(0,212,170,0.3);color:var(--teal);}
+  .toast.error{border-color:rgba(255,82,82,0.3);color:var(--red);}
+
+  /* AD MODAL */
+  .ad-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;padding:24px;}
+  .ad-modal.show{display:flex;}
+  .ad-box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:28px;width:100%;max-width:340px;text-align:center;}
+  .ad-title{font-size:20px;font-weight:700;margin-bottom:8px;}
+  .ad-sub{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+  .ad-timer{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:600;color:var(--gold);margin-bottom:8px;}
+  .ad-timer-label{font-size:12px;color:var(--muted);margin-bottom:24px;}
+  .ad-confirm-btn{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,var(--teal),#00aa88);border:none;color:#000;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:none;}
+  .ad-confirm-btn.show{display:block;}
+  .ad-cancel{font-size:13px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="back-btn" onclick="history.back()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </div>
+  <div class="topbar-title">⛏️ Mining</div>
+  <div class="pgc-pill">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--gold)"><circle cx="12" cy="12" r="10"/></svg>
+    <span id="topPGC">0</span> PGC
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- MINER CARD -->
+  <div class="miner-card">
+    <div class="miner-icon">
+      <div class="miner-circle">
+        <div class="miner-pickaxe">⛏️</div>
+      </div>
+    </div>
+    <div class="miner-level-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span id="levelLabel">Basic Pickaxe</span>
+    </div>
+    <div class="miner-rate" id="rateDisplay">1</div>
+    <div class="miner-rate-label">PGC per minute</div>
+
+    <!-- Boost banner -->
+    <div class="boost-banner" id="boostBanner" style="display:none;">
+      <div class="boost-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="boost-text">
+        <div class="boost-title">2x Speed Active ⚡</div>
+        <div class="boost-sub" id="boostTimeLeft">30 mins remaining</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BALANCE CARDS -->
+  <div class="balance-row">
+    <div class="bal-card">
+      <div class="bal-label">PGC Balance</div>
+      <div class="bal-value gold" id="pgcBalance">0.00</div>
+      <div class="bal-sub">Protege Gold Coin</div>
+    </div>
+    <div class="bal-card">
+      <div class="bal-label">Pending</div>
+      <div class="bal-value teal" id="pendingPGC">0.00</div>
+      <div class="bal-sub">Ready to collect</div>
+    </div>
+  </div>
+
+  <!-- COLLECT -->
+  <div class="collect-card">
+    <div class="collect-header">
+      <div class="collect-label">Uncollected PGC</div>
+      <div style="font-size:12px;color:var(--muted);" id="collectNGN">≈ ₦0</div>
+    </div>
+    <div class="collect-amount" id="collectAmount">0.00 PGC</div>
+    <div style="height:12px;"></div>
+    <button class="collect-btn" id="collectBtn" onclick="collectPGC()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Collect PGC
+    </button>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section-title">Actions</div>
+  <div class="action-grid">
+    <div class="action-card boost-card" onclick="showAdModal()">
+      <div class="action-icon ai-teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="action-title">2x Boost</div>
+      <div class="action-sub">Watch ad to double mining speed for 30 mins</div>
+    </div>
+    <div class="action-card upgrade-card" onclick="upgradeMiner()">
+      <div class="action-icon ai-purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+      </div>
+      <div class="action-title">Upgrade</div>
+      <div class="action-sub" id="upgradeSubText">500 PGC to Level 2</div>
+    </div>
+  </div>
+
+  <!-- WITHDRAW -->
+  <div class="section-title">Convert to NGN</div>
+  <div class="withdraw-card">
+    <div class="form-label">Amount (PGC)</div>
+    <input type="number" class="form-input" id="withdrawAmount" placeholder="Min 5,000 PGC"/>
+    <div class="form-hint" id="withdrawHint">Min: 5,000 PGC = ₦8,000 · Rate: 1,000 PGC = ₦1,600</div>
+    <button class="withdraw-btn" onclick="withdrawPGC()">Convert to NGN Wallet</button>
+  </div>
+
+  <!-- MINER LEVELS -->
+  <div class="section-title">Miner Levels</div>
+  <div class="levels-card" id="levelsCard"></div>
+
+  <!-- LEADERBOARD -->
+  <div class="section-title">Top Miners</div>
+  <div class="leader-card" id="leaderboard">
+    <div style="text-align:center;color:var(--muted);padding:20px;font-size:14px;">Loading...</div>
+  </div>
+
+</div>
+
+<!-- AD MODAL -->
+<div class="ad-modal" id="adModal">
+  <div class="ad-box">
+    <div style="font-size:40px;margin-bottom:12px;">⚡</div>
+    <div class="ad-title">Watch Ad for 2x Boost</div>
+    <div class="ad-sub">An ad will open. Watch it completely then come back and tap "Boost Activated" to claim your 30 minute 2x speed boost!</div>
+    <div class="ad-timer" id="adTimer">5</div>
+    <div class="ad-timer-label">seconds before you can confirm</div>
+    <button class="ad-confirm-btn" id="adConfirmBtn" onclick="confirmBoost()">✅ Boost Activated!</button>
+    <div class="ad-cancel" onclick="closeAdModal()">Cancel</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Monetag Onclick (triggers on first tap) -->
+<script>(function(s){s.dataset.zone='10738791',s.src='https://al5sm.com/tag.min.js'})([, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+const token = localStorage.getItem('protege_token');
+const PGC_TO_NGN = 1.6; // 1000 PGC = ₦1600, so 1 PGC = ₦1.6
+
+let minerData = null;
+let collectInterval = null;
+let adTimerInterval = null;
+
+// ── Auth check ──────────────────────────────
+if (!token) window.location.href = 'login.html';
+
+// ── API helper ──────────────────────────────
+async function api(endpoint, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${endpoint}`, opts);
+  return res.json();
+}
+
+// ── Toast ────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Load mining status ───────────────────────
+async function loadStatus() {
+  try {
+    const data = await api('/api/mining/status');
+    if (!data.success) return;
+
+    minerData = data.miner;
+    const rates = data.rates;
+
+    // Update UI
+    document.getElementById('levelLabel').textContent = minerData.level_label;
+    document.getElementById('rateDisplay').textContent = minerData.pgc_per_min;
+    document.getElementById('pgcBalance').textContent = minerData.pgc_balance.toFixed(2);
+    document.getElementById('topPGC').textContent = Math.floor(minerData.pgc_balance);
+
+    // Pending
+    updatePending(minerData.pending_pgc);
+
+    // Boost
+    if (minerData.boost_active) {
+      document.getElementById('boostBanner').style.display = 'flex';
+      document.getElementById('boostTimeLeft').textContent = `${minerData.boost_remaining_mins} mins remaining`;
+    } else {
+      document.getElementById('boostBanner').style.display = 'none';
+    }
+
+    // Upgrade text
+    if (minerData.next_level) {
+      document.getElementById('upgradeSubText').textContent = `${minerData.next_level.cost.toLocaleString()} PGC to Level ${minerData.next_level.level}`;
+    } else {
+      document.getElementById('upgradeSubText').textContent = 'Max level reached! 🏆';
+    }
+
+    // Withdraw hint
+    document.getElementById('withdrawHint').textContent =
+      `Min: ${rates.min_withdraw.toLocaleString()} PGC = ₦${rates.min_withdraw_ngn.toLocaleString()} · Rate: 1,000 PGC = ₦${(rates.pgc_to_ngn * 1000).toLocaleString()}`;
+
+    // Render levels
+    renderLevels(minerData.level);
+
+    // Start live counter
+    startLiveCounter();
+
+  } catch (e) {
+    showToast('Failed to load mining data', 'error');
+  }
+}
+
+function updatePending(pending) {
+  document.getElementById('pendingPGC').textContent = pending.toFixed(2);
+  document.getElementById('collectAmount').textContent = pending.toFixed(2) + ' PGC';
+  document.getElementById('collectNGN').textContent = '≈ ₦' + (pending * PGC_TO_NGN).toFixed(2);
+}
+
+// Live counter — increments pending every second based on rate
+function startLiveCounter() {
+  if (collectInterval) clearInterval(collectInterval);
+  if (!minerData) return;
+
+  const ratePerSec = minerData.pgc_per_min / 60;
+  let pending = minerData.pending_pgc;
+
+  collectInterval = setInterval(() => {
+    pending += ratePerSec;
+    updatePending(pending);
+  }, 1000);
+}
+
+// ── Collect ──────────────────────────────────
+async function collectPGC() {
+  const btn = document.getElementById('collectBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const data = await api('/api/mining/collect', 'POST');
+    if (data.success) {
+      showToast(data.message, 'success');
+      await loadStatus();
+    } else {
+      showToast(data.error || 'Nothing to collect yet', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Collect PGC`;
+  }
+}
+
+// ── Upgrade ──────────────────────────────────
+async function upgradeMiner() {
+  if (!minerData) return;
+  if (minerData.max_level) return showToast('Already at max level!', 'error');
+
+  const cost = minerData.next_level?.cost || 0;
+  const total = minerData.pgc_balance + minerData.pending_pgc;
+
+  if (total < cost) {
+    showToast(`Need ${(cost - total).toFixed(0)} more PGC to upgrade`, 'error');
+    return;
+  }
+
+  if (!confirm(`Upgrade to ${minerData.next_level.label} for ${cost.toLocaleString()} PGC?`)) return;
+
+  try {
+    const data = await api('/api/mining/upgrade', 'POST');
+    if (data.success) {
+      showToast(data.message, 'success');
+      await loadStatus();
+    } else {
+      showToast(data.error || 'Upgrade failed', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// ── Ad / Boost ───────────────────────────────
+let adCountdown = 5;
+
+function showAdModal() {
+  adCountdown = 5;
+  document.getElementById('adTimer').textContent = adCountdown;
+  document.getElementById('adConfirmBtn').classList.remove('show');
+  document.getElementById('adModal').classList.add('show');
+
+  // Open ad in new tab
+  window.open('https://omg10.com/4/8878712', '_blank');
+
+  // Start countdown
+  adTimerInterval = setInterval(() => {
+    adCountdown--;
+    document.getElementById('adTimer').textContent = adCountdown;
+    if (adCountdown <= 0) {
+      clearInterval(adTimerInterval);
+      document.getElementById('adTimer').textContent = '✓';
+      document.getElementById('adConfirmBtn').classList.add('show');
+    }
+  }, 1000);
+}
+
+function closeAdModal() {
+  clearInterval(adTimerInterval);
+  document.getElementById('adModal').classList.remove('show');
+}
+
+async function confirmBoost() {
+  const btn = document.getElementById('adConfirmBtn');
+  btn.textContent = 'Activating...';
+  btn.disabled = true;
+
+  try {
+    const data = await api('/api/mining/boost', 'POST');
+    if (data.success) {
+      showToast(data.message, 'success');
+      closeAdModal();
+      await loadStatus();
+    } else {
+      showToast(data.error || 'Failed to activate boost', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  } finally {
+    btn.textContent = '✅ Boost Activated!';
+    btn.disabled = false;
+  }
+}
+
+// ── Withdraw ─────────────────────────────────
+async function withdrawPGC() {
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
+  if (!amount || amount < 5000) return showToast('Minimum withdrawal is 5,000 PGC', 'error');
+
+  const ngn = (amount * PGC_TO_NGN).toFixed(2);
+  if (!confirm(`Convert ${amount.toLocaleString()} PGC to ₦${ngn}?`)) return;
+
+  try {
+    const data = await api('/api/mining/withdraw', 'POST', { amount });
+    if (data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('withdrawAmount').value = '';
+      await loadStatus();
+    } else {
+      showToast(data.error || 'Withdrawal failed', 'error');
+    }
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// ── Render levels ────────────────────────────
+function renderLevels(currentLevel) {
+  const levels = [
+    {level:1, label:'Basic Pickaxe',    rate:1,  cost:0},
+    {level:2, label:'Iron Pickaxe',     rate:2,  cost:500},
+    {level:3, label:'Gold Pickaxe',     rate:4,  cost:1500},
+    {level:4, label:'Diamond Pickaxe',  rate:8,  cost:4000},
+    {level:5, label:'Legendary Pickaxe',rate:15, cost:10000},
+  ];
+  const icons = ['🪨','⛏️','🥇','💎','🏆'];
+
+  document.getElementById('levelsCard').innerHTML = levels.map(l => `
+    <div class="level-row">
+      <div class="level-num ${l.level <= currentLevel ? 'level-active' : 'level-locked'}">
+        ${icons[l.level-1]}
+      </div>
+      <div class="level-info">
+        <div class="level-name" style="color:${l.level <= currentLevel ? 'var(--text)' : 'var(--muted)'}">${l.label}</div>
+        <div class="level-rate">${l.rate} PGC/min${l.level === currentLevel ? ' · <span style="color:var(--teal)">Active</span>' : ''}</div>
+      </div>
+      <div class="level-cost">${l.cost === 0 ? 'Free' : l.cost.toLocaleString() + ' PGC'}</div>
+    </div>
+  `).join('');
+}
+
+// ── Leaderboard ──────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const data = await api('/api/mining/leaderboard');
+    if (!data.success) return;
+
+    const ranks = ['🥇','🥈','🥉'];
+    document.getElementById('leaderboard').innerHTML = data.leaderboard.length === 0
+      ? '<div style="text-align:center;color:var(--muted);padding:20px;font-size:14px;">No miners yet — be the first! ⛏️</div>'
+      : data.leaderboard.map((row, i) => `
+          <div class="leader-row">
+            <div class="leader-rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i < 3 ? ranks[i] : '#'+(i+1)}</div>
+            <div class="leader-name">${row.users?.name || 'Miner'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-right:8px;">Lv.${row.level}</div>
+            <div class="leader-pgc">${Math.floor(row.total_earned).toLocaleString()} PGC</div>
+          </div>
+        `).join('');
+  } catch (e) {}
+}
+
+// ── Init ─────────────────────────────────────
+loadStatus();
+loadLeaderboard();
+
+// Refresh every 2 minutes
+setInterval(() => { loadStatus(); loadLeaderboard(); }, 120000);
+</script>
+</body>
+</html>
