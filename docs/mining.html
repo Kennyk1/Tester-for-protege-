@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Protege Mining</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+<!-- Monetag In-Page Push -->
+<script>(function(s){s.dataset.zone='9272446',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#08080f;
+    --card:#0f0f1e;
+    --border:rgba(255,255,255,0.07);
+    --accent:#6c63ff;
+    --teal:#00d4aa;
+    --gold:#f7c948;
+    --text:#f0f0f8;
+    --muted:#6b6b8a;
+    --red:#ff5252;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+
+  .orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:0.06;pointer-events:none;z-index:0;}
+  .orb1{width:350px;height:350px;background:var(--accent);top:-100px;left:-80px;animation:drift 14s ease-in-out infinite alternate;}
+  .orb2{width:300px;height:300px;background:var(--teal);bottom:0;right:-60px;animation:drift 11s ease-in-out infinite alternate-reverse;}
+  @keyframes drift{from{transform:translate(0,0);}to{transform:translate(20px,30px);}}
+
+  /* TOPBAR */
+  .topbar{position:sticky;top:0;z-index:10;background:rgba(8,8,15,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar-title{font-size:17px;font-weight:700;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px;}
+  .back-btn{width:38px;height:38px;border-radius:11px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .pgc-pill{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);border-radius:20px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:6px;}
+
+  .content{padding:16px;position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:40px;}
+
+  /* MINING HERO */
+  .mining-hero{background:linear-gradient(135deg,rgba(108,99,255,0.08),rgba(0,212,170,0.05));border:1px solid rgba(108,99,255,0.15);border-radius:24px;padding:24px 20px;margin-bottom:14px;text-align:center;position:relative;overflow:hidden;}
+  .mining-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(108,99,255,0.08),transparent 65%);pointer-events:none;}
+
+  /* Mining rig SVG animation */
+  .rig-wrap{width:80px;height:80px;margin:0 auto 16px;position:relative;}
+  .rig-circle{width:80px;height:80px;border-radius:50%;background:rgba(108,99,255,0.08);border:1.5px solid rgba(108,99,255,0.2);display:flex;align-items:center;justify-content:center;animation:rigPulse 2s ease-in-out infinite;}
+  @keyframes rigPulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,0.2);}50%{box-shadow:0 0 0 12px rgba(108,99,255,0);}}
+  .pickaxe-svg{animation:swing 1.2s ease-in-out infinite;}
+  @keyframes swing{0%,100%{transform:rotate(-20deg);}50%{transform:rotate(20deg);}}
+
+  .level-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:0.03em;margin-bottom:14px;}
+
+  /* LIVE COUNTER — the main feature */
+  .live-counter-wrap{margin-bottom:6px;}
+  .live-counter-label{font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+  .live-counter{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:600;color:var(--teal);letter-spacing:-0.01em;display:flex;align-items:baseline;gap:4px;justify-content:center;}
+  .live-counter .unit{font-size:14px;color:var(--muted);font-weight:400;}
+  .rate-row{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;}
+  .rate-badge{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);border-radius:8px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);}
+
+  /* Boost active */
+  .boost-active{background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-top:14px;}
+  .boost-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:blink 1s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .boost-text{font-size:13px;color:var(--teal);font-weight:600;}
+  .boost-sub{font-size:11px;color:var(--muted);}
+
+  /* STATS ROW */
+  .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;}
+  .stat-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+  .stat-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;}
+  .stat-value.purple{color:var(--accent);}
+  .stat-value.teal{color:var(--teal);}
+  .stat-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  /* COLLECT CARD */
+  .collect-card{background:var(--card);border:1px solid rgba(108,99,255,0.2);border-radius:18px;padding:18px;margin-bottom:14px;}
+  .collect-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .collect-title{font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+  .collect-ngn{font-size:12px;color:var(--muted);}
+  .collect-amount{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:var(--accent);margin-bottom:14px;}
+  .collect-amount .pgc-unit{font-size:14px;color:var(--muted);font-weight:400;margin-left:4px;}
+  .collect-btn{width:100%;padding:15px;border-radius:13px;background:linear-gradient(135deg,var(--accent),#8b85ff);border:none;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .collect-btn:active{opacity:0.8;}
+  .collect-btn:disabled{opacity:0.4;}
+
+  /* ACTION CARDS */
+  .section-label{font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;margin-top:4px;}
+  .action-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .action-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.2s;}
+  .action-card:active{opacity:0.8;}
+  .action-card.boost{border-color:rgba(0,212,170,0.2);}
+  .action-card.upgrade{border-color:rgba(108,99,255,0.2);}
+  .action-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .ai-teal{background:rgba(0,212,170,0.1);}
+  .ai-purple{background:rgba(108,99,255,0.1);}
+  .action-name{font-size:14px;font-weight:600;margin-bottom:3px;}
+  .action-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+
+  /* WITHDRAW */
+  .withdraw-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;}
+  .form-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
+  .form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'JetBrains Mono',sans-serif;font-size:16px;outline:none;margin-bottom:10px;}
+  .form-input:focus{border-color:var(--accent);}
+  .form-hint{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+  .withdraw-btn{width:100%;padding:15px;border-radius:13px;background:linear-gradient(135deg,var(--teal),#00aa88);border:none;color:#000;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s;}
+  .withdraw-btn:active{opacity:0.8;}
+
+  /* LEVELS */
+  .levels-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;}
+  .level-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .level-row:last-child{border-bottom:none;padding-bottom:0;}
+  .level-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .lv-active{background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.25);}
+  .lv-locked{background:rgba(255,255,255,0.03);border:1px solid var(--border);}
+  .level-info{flex:1;}
+  .level-name{font-size:14px;font-weight:600;margin-bottom:2px;}
+  .level-rate{font-size:12px;color:var(--muted);}
+  .level-cost{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);text-align:right;flex-shrink:0;}
+
+  /* LEADERBOARD */
+  .leader-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;}
+  .leader-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .leader-row:last-child{border-bottom:none;}
+  .leader-rank{width:24px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;text-align:center;}
+  .r1{color:var(--gold);}
+  .r2{color:#c0c0c0;}
+  .r3{color:#cd7f32;}
+  .leader-name{flex:1;font-size:14px;}
+  .leader-pgc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);}
+
+  /* AD MODAL */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;padding:24px;}
+  .modal.show{display:flex;}
+  .modal-box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:28px;width:100%;max-width:320px;text-align:center;}
+  .modal-title{font-size:19px;font-weight:700;margin-bottom:8px;}
+  .modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+  .modal-timer{font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:600;color:var(--teal);margin-bottom:4px;}
+  .modal-timer-label{font-size:11px;color:var(--muted);margin-bottom:20px;}
+  .modal-confirm{width:100%;padding:15px;border-radius:13px;background:linear-gradient(135deg,var(--teal),#00aa88);border:none;color:#000;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:none;}
+  .modal-confirm.show{display:block;}
+  .modal-cancel{font-size:13px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Space Grotesk',sans-serif;}
+
+  /* SPINNER */
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(70px);background:#1a1a2e;border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:500;transition:transform 0.3s;z-index:300;white-space:nowrap;max-width:88vw;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.success{border-color:rgba(0,212,170,0.3);color:var(--teal);}
+  .toast.error{border-color:rgba(255,82,82,0.3);color:var(--red);}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="back-btn" onclick="history.back()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </div>
+  <div class="topbar-title">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    Mining
+  </div>
+  <div class="pgc-pill">
+    <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="var(--accent)"/></svg>
+    <span id="topPGC">0.00</span> PGC
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- MINING HERO -->
+  <div class="mining-hero">
+    <div class="rig-wrap">
+      <div class="rig-circle">
+        <svg class="pickaxe-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="level-badge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span id="levelLabel">Basic Pickaxe</span>
+    </div>
+
+    <!-- LIVE COUNTER -->
+    <div class="live-counter-wrap">
+      <div class="live-counter-label">Mining in progress</div>
+      <div class="live-counter">
+        <span id="liveCounter">0.00000000</span>
+        <span class="unit">PGC</span>
+      </div>
+      <div class="rate-row">
+        <span>Speed</span>
+        <span class="rate-badge" id="rateDisplay">+0.00001667/sec</span>
+        <span id="boostTag" style="display:none;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);border-radius:8px;padding:3px 8px;font-size:11px;color:var(--teal);">2x ⚡</span>
+      </div>
+    </div>
+
+    <!-- Boost active banner -->
+    <div class="boost-active" id="boostBanner" style="display:none;">
+      <div class="boost-dot"></div>
+      <div>
+        <div class="boost-text">2x Speed Active ⚡</div>
+        <div class="boost-sub" id="boostLeft">30 mins remaining</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">PGC Balance</div>
+      <div class="stat-value purple" id="pgcBalance">0.00000000</div>
+      <div class="stat-sub">Collected</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Earned</div>
+      <div class="stat-value teal" id="totalEarned">0.00000000</div>
+      <div class="stat-sub">All time</div>
+    </div>
+  </div>
+
+  <!-- COLLECT -->
+  <div class="collect-card">
+    <div class="collect-top">
+      <div class="collect-title">Uncollected</div>
+      <div class="collect-ngn" id="collectNGN">≈ ₦0.00</div>
+    </div>
+    <div class="collect-amount">
+      <span id="collectAmount">0.00000000</span>
+      <span class="pgc-unit">PGC</span>
+    </div>
+    <button class="collect-btn" id="collectBtn" onclick="collectPGC()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Collect to Balance
+    </button>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section-label">Actions</div>
+  <div class="action-row">
+    <div class="action-card boost" onclick="showAdModal()">
+      <div class="action-icon ai-teal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="action-name">2x Boost</div>
+      <div class="action-desc">Watch ad · 30 min double speed</div>
+    </div>
+    <div class="action-card upgrade" onclick="upgradeMiner()">
+      <div class="action-icon ai-purple">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+      </div>
+      <div class="action-name">Upgrade</div>
+      <div class="action-desc" id="upgradeDesc">500 PGC → Level 2</div>
+    </div>
+  </div>
+
+  <!-- CONVERT TO NGN -->
+  <div class="section-label">Convert to NGN</div>
+  <div class="withdraw-card">
+    <div class="form-label">Amount (PGC)</div>
+    <input type="number" class="form-input" id="withdrawAmount" placeholder="Min 5,000 PGC"/>
+    <div class="form-hint" id="withdrawHint">Min: 5,000 PGC = ₦8,000 · Rate: 1,000 PGC = ₦1,600</div>
+    <button class="withdraw-btn" onclick="withdrawPGC()">Convert to NGN Wallet</button>
+  </div>
+
+  <!-- LEVELS -->
+  <div class="section-label">Miner Levels</div>
+  <div class="levels-card" id="levelsCard"></div>
+
+  <!-- LEADERBOARD -->
+  <div class="section-label">Top Miners</div>
+  <div class="leader-card" id="leaderboard">
+    <div style="text-align:center;color:var(--muted);padding:16px;font-size:13px;">Loading...</div>
+  </div>
+
+</div>
+
+<!-- AD MODAL -->
+<div class="modal" id="adModal">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:12px;">⚡</div>
+    <div class="modal-title">Watch Ad for 2x Boost</div>
+    <div class="modal-sub">An ad will open. Watch it then come back and confirm to activate 30 min double speed.</div>
+    <div class="modal-timer" id="adTimer">5</div>
+    <div class="modal-timer-label">seconds before you can confirm</div>
+    <button class="modal-confirm" id="adConfirmBtn" onclick="confirmBoost()">✅ Boost Activated!</button>
+    <button class="modal-cancel" onclick="closeAdModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Monetag Onclick -->
+<script>(function(s){s.dataset.zone='10738791',s.src='https://al5sm.com/tag.min.js'})([, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+<script>
+const API = 'https://sample-api-1-ryj7.onrender.com';
+const token = localStorage.getItem('protege_token');
+const PGC_TO_NGN = 1.6;
+
+let minerData = null;
+let liveInterval = null;
+let adTimerInt = null;
+let livePending = 0;
+
+if (!token) window.location.href = 'login.html';
+
+async function api(ep, method='GET', body=null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${ep}`, opts);
+  return res.json();
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function fmt(n) {
+  // Show 8 decimal places for small numbers
+  return parseFloat(n).toFixed(8);
+}
+
+async function loadStatus() {
+  try {
+    const data = await api('/api/mining/status');
+    if (!data.success) return;
+    minerData = data.miner;
+
+    // Update top pill
+    document.getElementById('topPGC').textContent = fmt(minerData.pgc_balance);
+
+    // Level
+    document.getElementById('levelLabel').textContent = minerData.level_label;
+
+    // Rate per second
+    const ratePerSec = minerData.pgc_per_min / 60;
+    document.getElementById('rateDisplay').textContent = `+${ratePerSec.toFixed(8)}/sec`;
+
+    // Balance stats
+    document.getElementById('pgcBalance').textContent = fmt(minerData.pgc_balance);
+    document.getElementById('totalEarned').textContent = fmt(minerData.total_earned);
+
+    // Pending
+    livePending = minerData.pending_pgc;
+    updateCollect();
+
+    // Boost
+    if (minerData.boost_active) {
+      document.getElementById('boostBanner').style.display = 'flex';
+      document.getElementById('boostLeft').textContent = `${minerData.boost_remaining_mins} mins remaining`;
+      document.getElementById('boostTag').style.display = 'inline-flex';
+    } else {
+      document.getElementById('boostBanner').style.display = 'none';
+      document.getElementById('boostTag').style.display = 'none';
+    }
+
+    // Upgrade desc
+    if (minerData.next_level) {
+      document.getElementById('upgradeDesc').textContent = `${minerData.next_level.cost.toLocaleString()} PGC → Level ${minerData.next_level.level}`;
+    } else {
+      document.getElementById('upgradeDesc').textContent = 'Max level reached 🏆';
+    }
+
+    // Levels
+    renderLevels(minerData.level);
+
+    // Start live counter
+    startLiveCounter();
+
+  } catch(e) {
+    showToast('Failed to load mining data', 'error');
+  }
+}
+
+function updateCollect() {
+  document.getElementById('collectAmount').textContent = fmt(livePending);
+  document.getElementById('liveCounter').textContent = fmt(livePending);
+  document.getElementById('collectNGN').textContent = '≈ ₦' + (livePending * PGC_TO_NGN).toFixed(4);
+}
+
+function startLiveCounter() {
+  if (liveInterval) clearInterval(liveInterval);
+  if (!minerData) return;
+  const ratePerSec = minerData.pgc_per_min / 60;
+  liveInterval = setInterval(() => {
+    livePending += ratePerSec;
+    updateCollect();
+  }, 1000);
+}
+
+async function collectPGC() {
+  const btn = document.getElementById('collectBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('/api/mining/collect', 'POST');
+    if (data.success) {
+      showToast(data.message, 'success');
+      livePending = 0;
+      await loadStatus();
+    } else {
+      showToast(data.error || 'Nothing to collect yet', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Collect to Balance`;
+  }
+}
+
+async function upgradeMiner() {
+  if (!minerData) return;
+  if (minerData.max_level) return showToast('Already at max level!', 'error');
+  const cost = minerData.next_level?.cost || 0;
+  const total = minerData.pgc_balance + livePending;
+  if (total < cost) return showToast(`Need ${(cost-total).toFixed(0)} more PGC`, 'error');
+  if (!confirm(`Upgrade to ${minerData.next_level.label} for ${cost.toLocaleString()} PGC?`)) return;
+  try {
+    const data = await api('/api/mining/upgrade', 'POST');
+    if (data.success) { showToast(data.message, 'success'); await loadStatus(); }
+    else showToast(data.error || 'Failed', 'error');
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+let adCountdown = 5;
+function showAdModal() {
+  adCountdown = 5;
+  document.getElementById('adTimer').textContent = adCountdown;
+  document.getElementById('adConfirmBtn').classList.remove('show');
+  document.getElementById('adModal').classList.add('show');
+  window.open('https://omg10.com/4/8878712', '_blank');
+  adTimerInt = setInterval(() => {
+    adCountdown--;
+    document.getElementById('adTimer').textContent = adCountdown;
+    if (adCountdown <= 0) {
+      clearInterval(adTimerInt);
+      document.getElementById('adTimer').textContent = '✓';
+      document.getElementById('adConfirmBtn').classList.add('show');
+    }
+  }, 1000);
+}
+
+function closeAdModal() {
+  clearInterval(adTimerInt);
+  document.getElementById('adModal').classList.remove('show');
+}
+
+async function confirmBoost() {
+  const btn = document.getElementById('adConfirmBtn');
+  btn.textContent = 'Activating...';
+  btn.disabled = true;
+  try {
+    const data = await api('/api/mining/boost', 'POST');
+    if (data.success) { showToast(data.message, 'success'); closeAdModal(); await loadStatus(); }
+    else showToast(data.error || 'Failed', 'error');
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.textContent = '✅ Boost Activated!'; btn.disabled = false; }
+}
+
+async function withdrawPGC() {
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
+  if (!amount || amount < 5000) return showToast('Minimum 5,000 PGC', 'error');
+  const ngn = (amount * PGC_TO_NGN).toFixed(2);
+  if (!confirm(`Convert ${amount.toLocaleString()} PGC to ₦${ngn}?`)) return;
+  try {
+    const data = await api('/api/mining/withdraw', 'POST', { amount });
+    if (data.success) { showToast(data.message, 'success'); document.getElementById('withdrawAmount').value = ''; await loadStatus(); }
+    else showToast(data.error || 'Failed', 'error');
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+function renderLevels(current) {
+  const levels = [
+    {l:1,name:'Basic Pickaxe',rate:1,cost:0,icon:'🪨'},
+    {l:2,name:'Iron Pickaxe',rate:2,cost:500,icon:'⛏️'},
+    {l:3,name:'Gold Pickaxe',rate:4,cost:1500,icon:'🥇'},
+    {l:4,name:'Diamond Pickaxe',rate:8,cost:4000,icon:'💎'},
+    {l:5,name:'Legendary Pickaxe',rate:15,cost:10000,icon:'🏆'},
+  ];
+  document.getElementById('levelsCard').innerHTML = levels.map(lv => `
+    <div class="level-row">
+      <div class="level-icon ${lv.l<=current?'lv-active':'lv-locked'}">${lv.icon}</div>
+      <div class="level-info">
+        <div class="level-name" style="color:${lv.l<=current?'var(--text)':'var(--muted)'}">${lv.name}</div>
+        <div class="level-rate">${lv.rate} PGC/min${lv.l===current?' · <span style="color:var(--teal)">Active</span>':''}</div>
+      </div>
+      <div class="level-cost">${lv.cost===0?'Free':lv.cost.toLocaleString()+' PGC'}</div>
+    </div>
+  `).join('');
+}
+
+async function loadLeaderboard() {
+  try {
+    const data = await api('/api/mining/leaderboard');
+    if (!data.success) return;
+    const ranks = ['🥇','🥈','🥉'];
+    document.getElementById('leaderboard').innerHTML = data.leaderboard.length === 0
+      ? '<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px;">No miners yet — be first! ⛏️</div>'
+      : data.leaderboard.map((row,i) => `
+          <div class="leader-row">
+            <div class="leader-rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i<3?ranks[i]:'#'+(i+1)}</div>
+            <div class="leader-name">${row.users?.name||'Miner'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-right:6px;">Lv.${row.level}</div>
+            <div class="leader-pgc">${parseFloat(row.total_earned).toFixed(2)} PGC</div>
+          </div>
+        `).join('');
+  } catch(e) {}
+}
+
+loadStatus();
+loadLeaderboard();
+setInterval(() => { loadStatus(); loadLeaderboard(); }, 120000);
+</script>
+</body>
+</html>
